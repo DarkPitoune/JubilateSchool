@@ -2,7 +2,7 @@ import { Grid, Card, Typography } from "@mui/material";
 
 const ClassCard = (props) => {
   return (
-    <Card sx={{borderRadius: "1em", padding:"1em"}}>
+    <Card sx={{ borderRadius: "1em", padding: "1em" }}>
       <Typography variant="h5">{props.title}</Typography>
       <Typography variant="body1">{props.description}</Typography>
     </Card>

@@ -4,8 +4,7 @@ import translations from "./translations";
 
 const useTranslator = () => {
   const [lang] = useContext(TranslatorContext);
-  console.log(lang)
-  return (keyword) => translations["en"][keyword];
+  return (keyword) => translations[lang][keyword];
 };
 
 export default useTranslator;

@@ -1,4 +1,4 @@
-@import url('http://fonts.cdnfonts.com/css/maximum-impact');
+@import url("http://fonts.cdnfonts.com/css/maximum-impact");
 
 body {
   background-color: rgb(195, 216, 247);
@@ -6,7 +6,7 @@ body {
 
 nav {
   background-color: #030340;
-  padding : 1em;
+  padding: 1em;
   color: white;
   display: flex;
   justify-content: space-between;

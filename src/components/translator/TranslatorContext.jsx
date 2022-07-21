@@ -1,6 +1,5 @@
 import { useState, createContext } from "react";
 
-
 const TranslatorContext = createContext("vfqds");
 
 const TranslatorContextProvider = (props) => {
@@ -12,6 +11,5 @@ const TranslatorContextProvider = (props) => {
     </TranslatorContext.Provider>
   );
 };
-
 
 export { TranslatorContext, TranslatorContextProvider };

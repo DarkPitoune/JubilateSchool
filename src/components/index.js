@@ -1,3 +1,7 @@
 export { default as theme } from "./theme";
 export { default as ClassGrid } from "./ClassGrid";
-export { TranslatorContextProvider, TranslatorContext, useTranslator } from "./translator";
+export {
+  TranslatorContextProvider,
+  TranslatorContext,
+  useTranslator,
+} from "./translator";

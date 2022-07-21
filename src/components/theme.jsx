@@ -17,7 +17,8 @@ const theme = responsiveFontSizes(
       h1: {
         fontSize: "2.5rem",
       },
-    }
-  }))
+    },
+  })
+);
 
-  export default theme;
+export default theme;
