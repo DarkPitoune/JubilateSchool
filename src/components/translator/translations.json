@@ -1,0 +1,16 @@
+{
+  "fr": {
+    "classes": "Les cours",
+    "who_am_i": "Qui suis-je ?",
+    "witnesses": "Ils en parlent",
+    "cost": "Le coût",
+    "contact": "Me contacter"
+  },
+  "en": {
+    "classes": "Classes",
+    "who_am_i": "Who am I?",
+    "witnesses": "They talk about it",
+    "cost": "The cost",
+    "contact": "Contact me"
+  }
+}
