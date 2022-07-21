@@ -1,5 +1,5 @@
 import { Button, ButtonGroup, ThemeProvider, Typography } from "@mui/material";
-import { theme, ClassGrid, useTranslator } from "./components";
+import { theme, ClassGrid, useTranslator, LangSwitch } from "./components";
 
 import "./App.css";
 
@@ -20,6 +20,7 @@ const App = () => {
             <Button>{translator("witnesses")}</Button>
             <Button>{translator("cost")}</Button>
             <Button>{translator("contact")}</Button>
+            <LangSwitch />
           </ButtonGroup>
         </nav>
         <Typography

@@ -1,16 +1,20 @@
 {
   "fr": {
+    "flag": "🇫🇷",
     "classes": "Les cours",
     "who_am_i": "Qui suis-je ?",
     "witnesses": "Ils en parlent",
     "cost": "Le coût",
-    "contact": "Me contacter"
+    "contact": "Me contacter",
+    "change_lang": "Changer de langue"
   },
   "en": {
+    "flag": "🇺🇸",
     "classes": "Classes",
     "who_am_i": "Who am I?",
     "witnesses": "They talk about it",
     "cost": "The cost",
-    "contact": "Contact me"
+    "contact": "Contact me",
+    "change_lang": "Change language"
   }
 }

@@ -4,4 +4,5 @@ export {
   TranslatorContextProvider,
   TranslatorContext,
   useTranslator,
+  LangSwitch,
 } from "./translator";
