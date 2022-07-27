@@ -15,8 +15,23 @@ const theme = responsiveFontSizes(
     },
     typography: {
       h1: {
-        fontSize: "2.5rem",
-        marginLeft: "1rem",
+        fontFamily: "'Kalam', cursive",
+        textShadow: "0 0 10px #030340",
+        color: "#ffffff",
+      },
+      h3: {
+        marginBotton: "2em",
+        fontFamily: "'Kalam', cursive",
+        textShadow: "0 0 10px #030340",
+        color: "#ffffff",
+      },
+      h4: {
+        fontFamily: "'Kalam', cursive",
+        color: "#030340",
+      },
+      body1: {
+        fontSize: "1.3rem",
+        lineHeight: "1.2",
       },
     },
     breakpoints: {

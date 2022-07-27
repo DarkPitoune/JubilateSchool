@@ -1,7 +1,20 @@
 @import url("http://fonts.cdnfonts.com/css/maximum-impact");
 
+#scroll-container {
+  scroll-snap-type: y mandatory;
+  overflow: auto;
+}
+
+.scroll-child {
+  scroll-snap-align: end;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: stretch;
+}
+
 body {
-  background-color: rgb(216, 229, 249);
+  background-color: rgb(120, 141, 171);
 }
 
 nav {
@@ -10,4 +23,21 @@ nav {
   color: white;
   display: flex;
   justify-content: space-between;
+  height: 3em;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0em);
+  }
+  50% {
+    transform: translateY(0.1em);
+  }
+  100% {
+    transform: translateY(0em);
+  }
+}
+
+.scroll-arrow {
+  animation: 2s ease-in-out infinite float;
 }

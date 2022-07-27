@@ -1,22 +1,34 @@
 {
   "fr": {
-    "flag": "🇫🇷",
-    "classes": "Les cours",
-    "who_am_i": "Qui suis-je ?",
+    "flag": "🇺🇸",
+    "main_title": "Soutien et suivi scolaire à distance",
+    "sub_title": "Assure ton niveau",
+    "classes": "Les formules",
+    "who_am_i": "Qui je suis",
     "witnesses": "Ils en parlent",
-    "cost": "Le coût",
+    "change_lang": "Change language",
+    "who_am_i_description": "Professeur de maths et de physiques expérimentée au collège et au lycée, je me suis spécialisée (et passionnée!) dans l'aide personnalisée aux collégiens et lycéens, en particulier ceux qui sont éloignés de la France. J'aime transmettre. J'ai ainsi suivi des jeunes en cursus CNED international pendant deux ans. Je suis convaincue que tout élève peut réussir pour peu qu'il soit écouté, aidé et soutenu. Et c'est vrai dans toutes les matières ! Un suivi individualisé, une démarche positive, et ça marche ! \n Contactez-moi pour qu'on en discute !",
+    "class_1_title": "Tutorat CNED International",
+    "class_1_description": "Suivi personnalisé des jeunes inscrits au complément international du CNED dans les trois matières, afin de transformer les cours du CNED en de véritables cours vivants et interactifs !",
+    "class_2_title": "Cours de soutien de maths sur l'année",
+    "class_2_description": "Ma matière préférée ! Ou comment faire aimer les maths et remonter ses notes de façon spectaculaire !",
+    "class_3_title": "Cours ponctuel sur un point particulier",
+    "class_3_description": "Un blocage ? Un besoin spécifique dans une matière ? On en discute et on établit un plan pour remonter la pente !",
+    "class_4_title": "Préparation d’examens, brevet, bac sous forme de stages",
+    "class_4_description": "Objectif examens: des stages adaptés à chacun, en distanciel ou en présentiel, pour prendre confiance et franchir la barre !",
     "contact": "Me contacter",
-    "change_lang": "Changer de langue",
-    "who_am_i_description": "Je suis une maman de 11 enfants et du coup je sais éduquer vos enfants mieux que vous globalement. Prenez bien note que vos enfants vont être mieux éduqués avec moi"
+    "contact_description": "En précisant si nécessaire la situation et l'horaire dans lequel vous souhaitez être recontacté.",
+    "cost": "Et le coût ?",
+    "cost_description": "Ce que vous voudrez mettre ! Je suis plus motivée par la réussite de votre enfant que par ce que vous pourrez régler !"
   },
   "en": {
-    "flag": "🇺🇸",
+    "flag": "🇫🇷",
     "classes": "Classes",
-    "who_am_i": "Who am I?",
+    "who_am_i": "Who I am",
     "witnesses": "They talk about it",
     "cost": "The cost",
     "contact": "Contact me",
-    "change_lang": "Change language",
+    "change_lang": "Changer de langue",
     "who_am_i_description": "I am a mother of 11 children and I know how to teach your children better than you globally. Take note that your children will be better educated with me"
   }
 }
