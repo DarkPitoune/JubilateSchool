@@ -7,19 +7,31 @@
     "who_am_i": "Qui je suis",
     "witnesses": "Ils en parlent",
     "change_lang": "Change language",
-    "who_am_i_description": "Professeur de maths et de physiques expérimentée au collège et au lycée, je me suis spécialisée (et passionnée!) dans l'aide personnalisée aux collégiens et lycéens, en particulier ceux qui sont éloignés de la France. J'aime transmettre. J'ai ainsi suivi des jeunes en cursus CNED international pendant deux ans. Je suis convaincue que tout élève peut réussir pour peu qu'il soit écouté, aidé et soutenu. Et c'est vrai dans toutes les matières ! Un suivi individualisé, une démarche positive, et ça marche ! \n Contactez-moi pour qu'on en discute !",
+    "who_am_i_description": "Professeur de maths et de physiques expérimentée au collège et au lycée, je me suis spécialisée (et passionnée!) dans l'aide personnalisée aux collégiens et lycéens, en particulier ceux qui sont éloignés de la France. J'aime transmettre. J'ai ainsi suivi des jeunes en cursus CNED international pendant deux ans. Je suis convaincue que tout élève peut réussir pour peu qu'il soit écouté, aidé et soutenu. Et c'est vrai dans toutes les matières ! Un suivi individualisé, une démarche positive, et ça marche ! \n Contactez-moi pour qu'on en discute !",
     "class_1_title": "Tutorat CNED International",
-    "class_1_description": "Suivi personnalisé des jeunes inscrits au complément international du CNED dans les trois matières, afin de transformer les cours du CNED en de véritables cours vivants et interactifs !",
+    "class_1_description": "Suivi personnalisé des jeunes inscrits au complément international du CNED dans les trois matières, afin de transformer les cours du CNED en de véritables cours vivants et interactifs !",
     "class_2_title": "Cours de soutien de maths sur l'année",
-    "class_2_description": "Ma matière préférée ! Ou comment faire aimer les maths et remonter ses notes de façon spectaculaire !",
+    "class_2_description": "Ma matière préférée ! Ou comment faire aimer les maths et remonter ses notes de façon spectaculaire !",
     "class_3_title": "Cours ponctuel sur un point particulier",
-    "class_3_description": "Un blocage ? Un besoin spécifique dans une matière ? On en discute et on établit un plan pour remonter la pente !",
+    "class_3_description": "Un blocage ? Un besoin spécifique dans une matière ? On en discute et on établit un plan pour remonter la pente !",
     "class_4_title": "Préparation d’examens, brevet, bac sous forme de stages",
-    "class_4_description": "Objectif examens: des stages adaptés à chacun, en distanciel ou en présentiel, pour prendre confiance et franchir la barre !",
+    "class_4_description": "Objectif examens : des stages adaptés à chacun, en distanciel ou en présentiel, pour prendre confiance et franchir la barre !",
+    "testimony_1_name": "Espérance",
+    "testimony_1_status": "Elève en 5e",
+    "testimony_1_description": "J'ai beaucoup aimé les cours de mathématiques avec Emmanuelle ! \n Elle est toujours patiente et explique très bien. Elle dit toujours que je travaille bien. Elle était très souple sur les changements d’horaires en raison de mes devoirs. \n Elle s’intéresse à moi vraiment et pas qu’à mon niveau de maths.",
+    "testimony_2_name": "Claire",
+    "testimony_2_status": "Maman",
+    "testimony_2_description": "Merci Emmanuelle pour votre dévouement pour accompagner notre fille tout au long de l’année.\n Vous lui avez donné confiance en elle : elle avait peur des mathématiques et c’est devenu sa matière préférée ! \n Un vrai professeur fait toute la différence : sur chaque chapitre toutes les notions sont bien approfondies avec des exercices types. Vos encouragements et votre manière de rendre les cours ludiques et positifs ont rendu ces rdv hebdomadaires un moment très apprécié et attendu par notre fille.",
+    "testimony_3_name": "Alexis",
+    "testimony_3_status": "Elève en 3e",
+    "testimony_3_description": "Ce que j’ai bien aimé avec Madame d’Hébrail c’est sa patience, Madame d’Hébrail est extrêmement patiente même si on passe 45 minutes sur le même exercice elle garde toujours son sourire et garde son sang froid, ce que je pense n’est pas facile 😂. Ce que j’aime aussi avec Madame d’Hébrail c’est que elle sait extrêmement bien expliquer et élaborer les exercices, que ça soit pour les Maths, Physique Chimie ou le Français. Grâce à Madame d’Hébrail j’ai réussi à passer mon DNB 3eme avec seulement une année de l’école française. Prof extraordinaire !",
+    "testimony_4_name": "Margot",
+    "testimony_4_status": "Elève en terminale",
+    "testimony_4_description": "Bonsoir Emmanuelle, je tenais à vous remercier sincèrement. Mes résultats du bac sont tombés et j’ai eu 18 en maths. Je vous suis infiniment reconnaissante de tout le temps que vous m’avez accordé. Je pense que vous m’avez donné les clés nécessaires pour avoir confiance en moi, ce qui était important. \n Merci pour tout !!",
     "contact": "Me contacter",
     "contact_description": "En précisant si nécessaire la situation et l'horaire dans lequel vous souhaitez être recontacté.",
     "cost": "Et le coût ?",
-    "cost_description": "Ce que vous voudrez mettre ! Je suis plus motivée par la réussite de votre enfant que par ce que vous pourrez régler !"
+    "cost_description": "Ce que vous voudrez mettre ! Je suis plus motivée par la réussite de votre enfant que par ce que vous pourrez régler !"
   },
   "en": {
     "flag": "🇫🇷",
@@ -29,6 +41,6 @@
     "cost": "The cost",
     "contact": "Contact me",
     "change_lang": "Changer de langue",
-    "who_am_i_description": "I am a mother of 11 children and I know how to teach your children better than you globally. Take note that your children will be better educated with me"
+    "who_am_i_description": "Self description"
   }
 }

@@ -17,6 +17,7 @@ const Card = (props) => {
         display: "flex",
         flexDirection: bigScreen ? "row" : "column",
       }}
+      {...props}
     >
       {props.image && (
         <img
@@ -33,8 +34,12 @@ const Card = (props) => {
         {props.title && (
           <Typography
             variant="h4"
-            sx={{ fontSize: bigScreen ? "2.5em" : "1.4em", lineHeight: "1em", margin: "auto", display: "flex", justifyContent: "center" }}
-            mb={1}
+            sx={{
+              fontSize: bigScreen ? "2.5em" : "1.4em",
+              lineHeight: "1em",
+              textAlign: "center",
+            }}
+            mb={"0.5em"}
           >
             {props.title}
           </Typography>
@@ -42,12 +47,12 @@ const Card = (props) => {
         <Typography
           variant="body1"
           sx={{
-            margin: "auto",
+            margin: "auto 0",
             textAlign: "justify",
             textJustify: "inter-word",
             lineHeight: "1.1em",
             padding: "0.2em 0.8em",
-            fontSize: bigScreen ? "1.3rem" : "1.1rem",
+            fontSize: bigScreen ? "1.3rem" : "1rem",
             whiteSpace: "pre-line",
           }}
         >

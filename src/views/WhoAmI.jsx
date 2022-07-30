@@ -12,7 +12,11 @@ const WhoAmI = forwardRef((props, ref) => {
       >
         {_("who_am_i")}
       </Typography>
-      <Card title="Emmanuelle d 'Hébrail" description={_("who_am_i_description")} image="/me.jpg" />
+      <Card
+        title="Emmanuelle d 'Hébrail"
+        description={_("who_am_i_description")}
+        image="/me.jpg"
+      />
     </section>
   );
 });

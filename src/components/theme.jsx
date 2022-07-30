@@ -29,6 +29,10 @@ const theme = responsiveFontSizes(
         fontFamily: "'Kalam', cursive",
         color: "#030340",
       },
+      subtitle2: {
+        color: "#888888",
+        fontStyle: "italic",
+      },
       body1: {
         fontSize: "1.3rem",
         lineHeight: "1.2",
@@ -36,7 +40,7 @@ const theme = responsiveFontSizes(
     },
     breakpoints: {
       values: {
-        xs: 0,
+        xs: 600,
         sm: 830,
         md: 960,
         lg: 1280,

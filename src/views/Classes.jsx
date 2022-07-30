@@ -1,4 +1,5 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
+import $ from "jquery";
 
 import { Grid, Typography, useMediaQuery, useTheme } from "@mui/material";
 
@@ -8,28 +9,45 @@ const ClassGrid = () => {
   const _ = useTranslator();
   const theme = useTheme();
   const bigScreen = useMediaQuery(theme.breakpoints.up("sm"));
+
+  useEffect(() => {
+    // Make all of the classes the same size
+    let maxSize = 0;
+    $(".course").each((i, obj) => {
+      if (maxSize <= obj.clientHeight) {
+        maxSize = obj.clientHeight;
+      }
+    });
+    console.log(maxSize);
+    $(".course").outerHeight(maxSize);
+  }, []);
+
   return (
     <Grid container spacing={bigScreen ? 2 : 1} mb={4}>
       <Grid item xs={12} sm={6}>
         <Card
+          className="course"
           title={_("class_1_title")}
           description={_("class_1_description")}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
         <Card
+          className="course"
           title={_("class_2_title")}
           description={_("class_2_description")}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
         <Card
+          className="course"
           title={_("class_3_title")}
           description={_("class_3_description")}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
         <Card
+          className="course"
           title={_("class_4_title")}
           description={_("class_4_description")}
         />

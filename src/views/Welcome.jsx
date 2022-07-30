@@ -1,20 +1,12 @@
-import { useState } from "react";
 import {
   useTheme,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
   Box,
   Typography,
   Button,
   ButtonGroup,
-  IconButton,
-  SwipeableDrawer,
   useMediaQuery,
 } from "@mui/material";
 import ExpandCircleDownIcon from "@mui/icons-material/ExpandCircleDown";
-import MenuIcon from "@mui/icons-material/Menu";
 import { LangSwitch, useTranslator } from "../components";
 
 const Welcome = ({ refs }) => {
@@ -23,11 +15,9 @@ const Welcome = ({ refs }) => {
   const theme = useTheme();
   const bigScreen = useMediaQuery(theme.breakpoints.up("sm"));
 
-  const [openMenu, setOpenMenu] = useState(false);
   const titles = [_("classes"), _("who_am_i"), _("witnesses"), _("contact")];
 
   const handleMenuClick = (index) => {
-    setOpenMenu(false);
     refs.current[index].scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -58,34 +48,8 @@ const Welcome = ({ refs }) => {
               {title}
             </Button>
           ))}
-          <LangSwitch />
         </ButtonGroup>
-        <IconButton
-          sx={{ color: "white", display: bigScreen ? "none" : "block" }}
-          onClick={() => setOpenMenu(true)}
-        >
-          <MenuIcon />
-        </IconButton>
-        <SwipeableDrawer
-          anchor="right"
-          open={openMenu}
-          onClose={() => setOpenMenu(false)}
-          onOpen={() => setOpenMenu(true)}
-          PaperProps={{ bgcolor: "theme.palette.secondary" }}
-        >
-          <List sx={{ bgcolor: "background.paper" }}>
-            {titles.map((title, index) => (
-              <ListItem key={title} disablePadding>
-                <ListItemButton onClick={() => handleMenuClick(index)}>
-                  <ListItemText primary={title} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            <ListItem>
-              <LangSwitch />
-            </ListItem>
-          </List>
-        </SwipeableDrawer>
+        <LangSwitch />
       </nav>
       <img
         src="/welcome.jpg"
