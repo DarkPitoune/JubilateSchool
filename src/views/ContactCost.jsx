@@ -75,7 +75,7 @@ const ContactCost = forwardRef((props, ref) => {
                   margin: bigScreen ? "none" : "auto",
                 }}
               >
-                (+973) 3874 2890
+                +33 613 294 055
               </Button>
             </Box>
           </Card>

@@ -87,6 +87,12 @@ const Witnesses = forwardRef((props, ref) => {
           image={"/alexis.jpeg"}
         />
         <Testimony
+          name={_("testimony_6_name")}
+          text={_("testimony_6_description")}
+          status={_("testimony_6_status")}
+          image={"/sara.jpg"}
+        />
+        <Testimony
           name={_("testimony_2_name")}
           text={_("testimony_2_description")}
           status={_("testimony_2_status")}
@@ -95,6 +101,11 @@ const Witnesses = forwardRef((props, ref) => {
           name={_("testimony_4_name")}
           text={_("testimony_4_description")}
           status={_("testimony_4_status")}
+        />
+        <Testimony
+          name={_("testimony_5_name")}
+          text={_("testimony_5_description")}
+          status={_("testimony_5_status")}
         />
       </Box>
     </section>
