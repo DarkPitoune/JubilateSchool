@@ -75,9 +75,9 @@ const Welcome = ({ refs }) => {
           marginX: "2em",
         }}
       >
-        <Typography variant="h1">{_("main_title")}</Typography>
+        <Typography variant="h1">{_("sub_title")}</Typography>
         <Typography variant="h3" sx={{ textAlign: "left" }}>
-          {_("sub_title")}
+          {_("main_title")}
         </Typography>
         <ExpandCircleDownIcon
           fontSize="large"

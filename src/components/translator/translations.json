@@ -37,7 +37,7 @@
     "contact": "Me contacter",
     "contact_description": "En précisant si nécessaire la situation et l'horaire dans lequel vous souhaitez être recontacté.",
     "cost": "Et le coût ?",
-    "cost_description": "Ce que vous voudrez mettre ! Je suis plus motivée par la réussite de votre enfant que par ce que vous pourrez régler !"
+    "cost_description": "On en parle ensemble ! Je suis plus motivée par la réussite de votre enfant que par ce que vous pourrez régler !"
   },
   "en": {
     "flag": "🇫🇷",
@@ -77,6 +77,6 @@
     "contact": "Contact me",
     "contact_description": "Specifying if necessary the situation and the time in which you wish to be contacted.",
     "cost": "What about the cost?",
-    "cost_description": "Whatever you want to put on! I am more motivated by your child's success than by what you can fix!"
+    "cost_description": "Let's talk about it! I am more motivated by your child's success than by what you can fix!"
   }
 }
