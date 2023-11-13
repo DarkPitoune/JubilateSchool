@@ -18,7 +18,6 @@ const ClassGrid = () => {
         maxSize = obj.clientHeight;
       }
     });
-    console.log(maxSize);
     $(".course").outerHeight(maxSize);
   }, []);
 
