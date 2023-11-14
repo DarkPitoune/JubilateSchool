@@ -69,7 +69,7 @@ const ContactCost = forwardRef((props, ref) => {
                 startIcon={<WhatsAppIcon />}
                 component="a"
                 color="success"
-                href="https://wa.me/97338742890"
+		href="https://wa.me/33613294055"
                 sx={{
                   width: "fit-content",
                   margin: bigScreen ? "none" : "auto",
