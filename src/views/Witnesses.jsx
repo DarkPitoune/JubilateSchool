@@ -75,6 +75,12 @@ const Witnesses = forwardRef((props, ref) => {
         }}
       >
         <Testimony
+          name={_("testimony_7_name")}
+          text={_("testimony_7_description")}
+          status={_("testimony_7_status")}
+          image={"/ileana.jpg"}
+        />
+        <Testimony
           name={_("testimony_1_name")}
           text={_("testimony_1_description")}
           status={_("testimony_1_status")}
