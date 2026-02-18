@@ -1,0 +1,17 @@
+[functions.create-checkout-session]
+verify_jwt = false
+
+[functions.confirm-booking]
+verify_jwt = false
+
+[functions.reject-booking]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.expire-bookings]
+verify_jwt = false
