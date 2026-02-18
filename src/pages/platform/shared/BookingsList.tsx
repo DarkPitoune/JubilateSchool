@@ -83,12 +83,12 @@ const BookingsList = () => {
           {_("bookings_empty")}
         </Typography>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
+        <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 500 }}>
             <TableHead>
               <TableRow sx={{ bgcolor: "#030340" }}>
-                <TableCell sx={{ color: "white" }}>{_("bookings_date")}</TableCell>
-                <TableCell sx={{ color: "white" }}>{_("bookings_time")}</TableCell>
+                <TableCell sx={{ color: "white", whiteSpace: "nowrap" }}>{_("bookings_date")}</TableCell>
+                <TableCell sx={{ color: "white", whiteSpace: "nowrap" }}>{_("bookings_time")}</TableCell>
                 <TableCell sx={{ color: "white" }} align="center">
                   {_("bookings_duration_col")}
                 </TableCell>
@@ -106,10 +106,10 @@ const BookingsList = () => {
             <TableBody>
               {bookings.map((b) => (
                 <TableRow key={b.id} hover>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     {format(new Date(b.start_time), "PPP", { locale })}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     {format(new Date(b.start_time), "p", { locale })} —{" "}
                     {format(new Date(b.end_time), "p", { locale })}
                   </TableCell>

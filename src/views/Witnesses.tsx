@@ -24,8 +24,9 @@ const Testimony = ({ name, image, text, status }: TestimonyProps) => {
     <Card
       className="scroll-child"
       sx={{
-        minWidth: "min(75%, 30em)",
-        margin: "auto 1em",
+        minWidth: "min(80%, 28em)",
+        flexShrink: 0,
+        margin: "auto 0.5em",
         borderRadius: "1em",
         padding: bigScreen ? "1em" : "0.7em",
         display: "inline",
@@ -78,7 +79,11 @@ const Witnesses = forwardRef<HTMLElement, { id: string }>((props, ref) => {
           display: "flex",
           flexDirection: "row",
           scrollSnapType: "x mandatory",
-          overflow: "auto",
+          overflowX: "auto",
+          overflowY: "hidden",
+          px: 1,
+          pb: 1,
+          mx: -1,
         }}
       >
         <Testimony

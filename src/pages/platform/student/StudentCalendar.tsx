@@ -179,8 +179,10 @@ const StudentCalendar = () => {
         sx={{
           bgcolor: "white",
           borderRadius: 1,
-          p: 2,
+          p: { xs: 1, sm: 2 },
+          overflowX: "auto",
           "& .fc": { fontFamily: "inherit" },
+          "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 },
         }}
       >
         <FullCalendar

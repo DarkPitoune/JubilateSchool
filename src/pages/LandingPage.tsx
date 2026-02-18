@@ -17,7 +17,7 @@ const LandingPage = () => {
         <Welcome refs={titlesRef} />
       </section>
       <Box
-        sx={{ maxWidth: "70em", margin: "1em auto 0", padding: "1em 3vw 0" }}
+        sx={{ maxWidth: "70em", margin: "1em auto 0", padding: { xs: "1em 16px 0", sm: "1em 24px 0" } }}
       >
         <Classes id="classes" ref={(el) => { titlesRef.current[0] = el; }} />
         <WhoAmI id="whoami" ref={(el) => { titlesRef.current[1] = el; }} />

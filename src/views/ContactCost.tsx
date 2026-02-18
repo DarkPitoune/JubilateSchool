@@ -59,7 +59,9 @@ const ContactCost = forwardRef<HTMLElement, { id: string }>((props, ref) => {
                 sx={{
                   textTransform: "none",
                   width: "fit-content",
+                  maxWidth: "100%",
                   margin: bigScreen ? "none" : "auto",
+                  fontSize: { xs: "0.8rem", sm: "0.875rem" },
                 }}
               >
                 jubilateschool@yahoo.com
@@ -72,6 +74,7 @@ const ContactCost = forwardRef<HTMLElement, { id: string }>((props, ref) => {
 		href="https://wa.me/33613294055"
                 sx={{
                   width: "fit-content",
+                  maxWidth: "100%",
                   margin: bigScreen ? "none" : "auto",
                 }}
               >

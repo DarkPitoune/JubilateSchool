@@ -98,8 +98,8 @@ const StudentList = () => {
           {_("students_empty")}
         </Typography>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
+        <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 500 }}>
             <TableHead>
               <TableRow sx={{ bgcolor: "#030340" }}>
                 <TableCell sx={{ color: "white" }}>{_("students_name")}</TableCell>
@@ -126,7 +126,7 @@ const StudentList = () => {
                     <TableCell align="center">
                       {(student.totalMinutes / 60).toFixed(1)}h
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
                       {lastBooking
                         ? format(new Date(lastBooking.start_time), "PPP", { locale })
                         : "—"}

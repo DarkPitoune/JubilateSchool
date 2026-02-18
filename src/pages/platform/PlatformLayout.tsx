@@ -126,7 +126,7 @@ const PlatformLayout = () => {
         </Drawer>
       )}
 
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         <AppBar
           position="sticky"
           sx={{
@@ -154,7 +154,7 @@ const PlatformLayout = () => {
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ flex: 1, p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ flex: 1, p: { xs: 1.5, sm: 3 }, minWidth: 0 }}>
           <Outlet />
         </Box>
       </Box>

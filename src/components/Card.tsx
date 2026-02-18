@@ -24,9 +24,10 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         sx={{
           borderRadius: "1em",
-          padding: bigScreen ? "1em" : "0.7em 0.2em",
+          padding: bigScreen ? "1em" : "0.7em 0.5em",
           display: "flex",
           flexDirection: bigScreen ? "row" : "column",
+          overflow: "hidden",
         }}
         {...rest}
       >
@@ -36,6 +37,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
             alt={title}
             style={{
               height: bigScreen ? "17em" : "10em",
+              maxWidth: "100%",
+              objectFit: "contain",
               margin: "auto",
               marginBottom: bigScreen ? "auto" : "1em",
             }}

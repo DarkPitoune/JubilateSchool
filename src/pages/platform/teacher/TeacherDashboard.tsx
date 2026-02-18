@@ -146,12 +146,12 @@ const TeacherDashboard = () => {
           </Typography>
           {pendingBookings.map((booking) => (
             <Card key={booking.id} sx={{ mb: 1 }}>
-              <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                <Box>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.5, "&:last-child": { pb: 1.5 }, gap: 1, flexWrap: "wrap" }}>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }} noWrap>
                     {booking.profiles?.full_name}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#666" }}>
+                  <Typography variant="body2" sx={{ color: "#666" }} noWrap>
                     {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
                   </Typography>
                   {booking.note && (
@@ -179,12 +179,12 @@ const TeacherDashboard = () => {
         ) : (
           upcomingBookings.map((booking) => (
             <Card key={booking.id} sx={{ mb: 1 }}>
-              <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                <Box>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.5, "&:last-child": { pb: 1.5 }, gap: 1, flexWrap: "wrap" }}>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }} noWrap>
                     {booking.profiles?.full_name}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#666" }}>
+                  <Typography variant="body2" sx={{ color: "#666" }} noWrap>
                     {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
                   </Typography>
                 </Box>

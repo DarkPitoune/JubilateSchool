@@ -43,8 +43,8 @@ const Welcome = ({ refs }: WelcomeProps) => {
       }}
       component="section"
     >
-      <nav style={{ paddingTop: bigScreen ? "1em" : "2.5em" }}>
-        <img src="/logo.png" alt="logo" style={{ height: "3.8em" }} />
+      <nav>
+        <img src="/logo.png" alt="logo" style={{ height: "2.5em" }} />
         <ButtonGroup
           sx={{ display: bigScreen ? "block" : "none" }}
           variant="text"
@@ -98,7 +98,8 @@ const Welcome = ({ refs }: WelcomeProps) => {
           justifyContent: "space-evenly",
           height: "100vh",
           textAlign: "center",
-          marginX: "2em",
+          marginX: { xs: "1em", sm: "2em" },
+          paddingTop: "3.5em",
         }}
       >
         <Typography variant="h1">{_("sub_title")}</Typography>
