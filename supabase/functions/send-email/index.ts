@@ -1,0 +1,203 @@
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { supabaseAdmin } from "../_shared/supabase.ts";
+
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:3000";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const { type, booking_id } = await req.json();
+
+    // Fetch booking with student profile
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("*, profiles!bookings_student_id_fkey(full_name, email, preferred_lang)")
+      .eq("id", booking_id)
+      .single();
+
+    if (!booking) {
+      return new Response(JSON.stringify({ error: "Booking not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fetch teacher profile
+    const { data: teacherProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("role", "teacher")
+      .limit(1)
+      .single();
+
+    const studentLang = booking.profiles?.preferred_lang || "fr";
+    const studentName = booking.profiles?.full_name || "Student";
+    const studentEmail = booking.profiles?.email;
+    const teacherEmail = teacherProfile?.email;
+    const dateStr = new Date(booking.start_time).toLocaleString("fr-FR", {
+      dateStyle: "full",
+      timeStyle: "short",
+    });
+    const price = (booking.price_cents / 100).toFixed(2);
+    const confirmUrl = `${SUPABASE_URL}/functions/v1/confirm-booking?token=${booking.confirmation_token}`;
+    const rejectUrl = `${SUPABASE_URL}/functions/v1/reject-booking?token=${booking.confirmation_token}`;
+
+    let to: string;
+    let subject: string;
+    let html: string;
+
+    switch (type) {
+      case "new_booking_teacher":
+        to = teacherEmail;
+        subject = `Nouvelle demande de cours — ${studentName}`;
+        html = `
+          <h2>Nouvelle demande de réservation</h2>
+          <p><strong>Élève :</strong> ${studentName}</p>
+          <p><strong>Date :</strong> ${dateStr}</p>
+          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
+          <p><strong>Prix :</strong> ${price} €</p>
+          ${booking.note ? `<p><strong>Note :</strong> ${booking.note}</p>` : ""}
+          <br/>
+          <p>
+            <a href="${confirmUrl}" style="background:#4caf50;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;margin-right:12px;">✓ Confirmer</a>
+            <a href="${rejectUrl}" style="background:#f44336;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;">✗ Refuser</a>
+          </p>
+          <br/>
+          <p style="color:#888;font-size:12px;">Si vous ne répondez pas sous 48h, la demande sera automatiquement annulée.</p>
+        `;
+        break;
+
+      case "booking_confirmed_student":
+        to = studentEmail;
+        subject =
+          studentLang === "fr"
+            ? "Votre cours est confirmé !"
+            : "Your session is confirmed!";
+        html =
+          studentLang === "fr"
+            ? `
+          <h2>Réservation confirmée</h2>
+          <p>Votre cours a été confirmé.</p>
+          <p><strong>Date :</strong> ${dateStr}</p>
+          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
+          <p><strong>Prix :</strong> ${price} €</p>
+          <p>À bientôt !</p>
+        `
+            : `
+          <h2>Booking Confirmed</h2>
+          <p>Your session has been confirmed.</p>
+          <p><strong>Date:</strong> ${dateStr}</p>
+          <p><strong>Duration:</strong> ${booking.duration_minutes} min</p>
+          <p><strong>Price:</strong> €${price}</p>
+          <p>See you soon!</p>
+        `;
+        break;
+
+      case "booking_confirmed_teacher":
+        to = teacherEmail;
+        subject = `Cours confirmé — ${studentName}`;
+        html = `
+          <h2>Cours confirmé</h2>
+          <p><strong>Élève :</strong> ${studentName}</p>
+          <p><strong>Date :</strong> ${dateStr}</p>
+          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
+          <p><strong>Prix :</strong> ${price} €</p>
+        `;
+        break;
+
+      case "booking_rejected_student":
+        to = studentEmail;
+        subject =
+          studentLang === "fr"
+            ? "Votre demande de cours n'a pas été acceptée"
+            : "Your booking request was not accepted";
+        html =
+          studentLang === "fr"
+            ? `
+          <h2>Demande non acceptée</h2>
+          <p>Votre demande de cours du ${dateStr} n'a pas été acceptée.</p>
+          <p>Votre carte bancaire n'a pas été débitée.</p>
+          <p>N'hésitez pas à réserver un autre créneau.</p>
+        `
+            : `
+          <h2>Booking Not Accepted</h2>
+          <p>Your booking request for ${dateStr} was not accepted.</p>
+          <p>Your card was not charged.</p>
+          <p>Feel free to book another slot.</p>
+        `;
+        break;
+
+      case "booking_expired_student":
+        to = studentEmail;
+        subject =
+          studentLang === "fr"
+            ? "Votre demande de cours a expiré"
+            : "Your booking request has expired";
+        html =
+          studentLang === "fr"
+            ? `
+          <h2>Demande expirée</h2>
+          <p>Votre demande de cours du ${dateStr} a expiré car elle n'a pas été traitée à temps.</p>
+          <p>Votre carte bancaire n'a pas été débitée.</p>
+          <p>N'hésitez pas à réserver un autre créneau.</p>
+        `
+            : `
+          <h2>Booking Expired</h2>
+          <p>Your booking request for ${dateStr} has expired because it was not processed in time.</p>
+          <p>Your card was not charged.</p>
+          <p>Feel free to book another slot.</p>
+        `;
+        break;
+
+      default:
+        return new Response(
+          JSON.stringify({ error: `Unknown email type: ${type}` }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+    }
+
+    // Send via Resend
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Jubilate School <noreply@jubilateschool.com>",
+        to: [to],
+        subject,
+        html,
+      }),
+    });
+
+    const resData = await res.json();
+
+    if (!res.ok) {
+      console.error("Resend error:", resData);
+      return new Response(JSON.stringify({ error: "Failed to send email" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
