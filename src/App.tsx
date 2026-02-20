@@ -14,9 +14,12 @@ import StudentCalendar from "./pages/platform/student/StudentCalendar";
 import BookingsList from "./pages/platform/shared/BookingsList";
 import BookingSuccess from "./pages/platform/shared/BookingSuccess";
 import BookingCancel from "./pages/platform/shared/BookingCancel";
+import AdminPage from "./pages/platform/admin/AdminPage";
 
 const PlatformRedirect = () => {
-  const { profile } = useAuth();
+  const { profile, realProfile } = useAuth();
+  if (realProfile?.role === "admin" && !profile) return <Navigate to="/app/admin" replace />;
+  if (realProfile?.role === "admin" && profile === realProfile) return <Navigate to="/app/admin" replace />;
   const dest = profile?.role === "teacher" ? "/app/dashboard" : "/app/calendar";
   return <Navigate to={dest} replace />;
 };
@@ -72,6 +75,14 @@ const App = () => {
           <Route path="bookings" element={<BookingsList />} />
           <Route path="booking/success" element={<BookingSuccess />} />
           <Route path="booking/cancel" element={<BookingCancel />} />
+          <Route
+            path="admin"
+            element={
+              <RoleGate role="admin">
+                <AdminPage />
+              </RoleGate>
+            }
+          />
           <Route path="*" element={<PlatformRedirect />} />
         </Route>
       </Routes>

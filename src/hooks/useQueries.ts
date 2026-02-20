@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import type { Booking, AvailabilityRange, Pricing, FreeWindow } from "../types";
+import type { Booking, AvailabilityRange, Pricing, FreeWindow, Profile } from "../types";
 
 // ── Bookings list (teacher sees all, student sees own) ──
 
-export function useBookingsList(role: "teacher" | "student" | undefined, userId: string | undefined) {
+export function useBookingsList(role: string | undefined, userId: string | undefined) {
   return useQuery({
     queryKey: ["bookings", { role, userId }],
     queryFn: async () => {
@@ -246,6 +246,41 @@ interface StudentSummary {
   bookings: Booking[];
   totalConfirmed: number;
   totalMinutes: number;
+}
+
+// ── Admin dashboard ──
+
+export function useAdminDashboard() {
+  return useQuery({
+    queryKey: ["admin-dashboard"],
+    queryFn: async () => {
+      const [{ data: profiles }, { data: bookings }] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase
+          .from("bookings")
+          .select("*, profiles!bookings_student_id_fkey(full_name, email)")
+          .order("created_at", { ascending: false }),
+      ]);
+
+      const allProfiles = (profiles || []) as Profile[];
+      const allBookings = (bookings || []) as Booking[];
+
+      const studentCount = allProfiles.filter((p) => p.role === "student").length;
+      const confirmedBookings = allBookings.filter((b) => b.status === "confirmed");
+      const pendingBookings = allBookings.filter((b) => b.status === "pending_confirmation");
+      const revenueCents = confirmedBookings.reduce((sum, b) => sum + b.price_cents, 0);
+
+      return {
+        profiles: allProfiles,
+        bookings: allBookings,
+        recentBookings: allBookings.slice(0, 10),
+        studentCount,
+        confirmedCount: confirmedBookings.length,
+        pendingCount: pendingBookings.length,
+        revenueCents,
+      };
+    },
+  });
 }
 
 export function useStudentList() {

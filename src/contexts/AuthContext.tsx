@@ -7,8 +7,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [realProfile, setRealProfile] = useState<Profile | null>(null);
+  const [impersonating, setImpersonating] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const profile = impersonating ?? realProfile;
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -30,8 +33,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       if (session?.user) {
         const p = await fetchProfile(session.user.id);
-        if (p) {
-          // Auto-detect browser timezone and sync if different
+        if (p && p.role !== "admin") {
+          // Auto-detect browser timezone and sync if different (skip for admin)
           const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
           if (browserTz && browserTz !== p.timezone) {
             supabase
@@ -42,17 +45,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             p.timezone = browserTz;
           }
         }
-        setProfile(p);
+        setRealProfile(p);
       } else {
-        setProfile(null);
+        setRealProfile(null);
+        setImpersonating(null);
       }
       setLoading(false);
     });
 
-    // When the tab becomes visible again after being backgrounded,
-    // force a token refresh so the JWT is fresh before any queries fire.
-    // getSession() only returns the cached session — refreshSession() actually
-    // contacts the server and issues a new access token.
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         supabase.auth.refreshSession();
@@ -69,11 +69,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
-    setProfile(null);
+    setRealProfile(null);
+    setImpersonating(null);
+  };
+
+  const impersonate = (p: Profile | null) => {
+    setImpersonating(p);
   };
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ session, profile, realProfile, loading, signOut, impersonate }}>
       {children}
     </AuthContext.Provider>
   );

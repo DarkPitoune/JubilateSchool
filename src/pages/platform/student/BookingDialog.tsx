@@ -227,15 +227,22 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
           </Typography>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>{_("cancel")}</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={loading || !startTime || !duration}
-        >
-          {loading ? _("loading") : _("booking_proceed_payment")}
-        </Button>
+      <DialogActions sx={{ flexDirection: "column", alignItems: "stretch", gap: 0.5 }}>
+        {loading && (
+          <Typography variant="caption" sx={{ color: "#999", textAlign: "center" }}>
+            {_("booking_redirecting_stripe")}
+          </Typography>
+        )}
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Button onClick={handleClose}>{_("cancel")}</Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={loading || !startTime || !duration}
+          >
+            {loading ? _("loading") : _("booking_proceed_payment")}
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );

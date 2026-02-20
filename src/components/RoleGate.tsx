@@ -20,7 +20,9 @@ const RoleGate = ({ role, children }: RoleGateProps) => {
   }
 
   if (!profile || profile.role !== role) {
-    const redirect = profile?.role === "teacher" ? "/app/dashboard" : "/app/calendar";
+    const redirect =
+      profile?.role === "admin" ? "/app/admin" :
+      profile?.role === "teacher" ? "/app/dashboard" : "/app/calendar";
     return <Navigate to={redirect} replace />;
   }
 

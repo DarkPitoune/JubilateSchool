@@ -4,7 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 
 export interface Profile {
   id: string;
-  role: "student" | "teacher";
+  role: "student" | "teacher" | "admin";
   full_name: string;
   email: string;
   preferred_lang: "fr" | "en";
@@ -64,8 +64,10 @@ export interface FreeWindow {
 export interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
+  realProfile: Profile | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  impersonate: (profile: Profile | null) => void;
 }
 
 // Translator

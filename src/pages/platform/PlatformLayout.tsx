@@ -14,6 +14,7 @@ import {
   useMediaQuery,
   useTheme,
   Divider,
+  Chip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -23,6 +24,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HomeIcon from "@mui/icons-material/Home";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslator } from "../../components";
 import CounterpartClock from "../../components/CounterpartClock";
@@ -33,25 +35,25 @@ const DRAWER_WIDTH = 240;
 
 const PlatformLayout = () => {
   const _ = useTranslator();
-  const { profile, signOut } = useAuth();
+  const { profile, realProfile, signOut, impersonate } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const bigScreen = useMediaQuery(theme.breakpoints.up("sm"));
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isAdmin = realProfile?.role === "admin";
+  const isImpersonating = isAdmin && profile !== realProfile;
   const isTeacher = profile?.role === "teacher";
-  usePushSubscription(profile?.id);
+  usePushSubscription(isAdmin ? undefined : profile?.id);
 
   // Fetch counterpart timezone
   const [counterpartTz, setCounterpartTz] = useState<string | null>(null);
   useEffect(() => {
-    if (!profile) return;
+    if (!profile || isAdmin && !isImpersonating) return;
     if (isTeacher) {
-      // Teacher sees France time (most students are there)
       setCounterpartTz("Europe/Paris");
     } else {
-      // Student fetches the teacher's timezone
       supabase
         .from("profiles")
         .select("timezone")
@@ -62,7 +64,7 @@ const PlatformLayout = () => {
           if (data?.timezone) setCounterpartTz(data.timezone);
         });
     }
-  }, [profile, isTeacher]);
+  }, [profile, isTeacher, isAdmin, isImpersonating]);
 
   const teacherLinks = [
     {
@@ -88,7 +90,21 @@ const PlatformLayout = () => {
     { label: _("nav_bookings"), path: "/app/bookings", icon: <ListAltIcon /> },
   ];
 
-  const navLinks = isTeacher ? teacherLinks : studentLinks;
+  const adminLinks = [
+    {
+      label: _("admin_title"),
+      path: "/app/admin",
+      icon: <AdminPanelSettingsIcon />,
+    },
+  ];
+
+  const navLinks = isImpersonating
+    ? (isTeacher ? teacherLinks : studentLinks)
+    : isAdmin
+      ? adminLinks
+      : isTeacher
+        ? teacherLinks
+        : studentLinks;
 
   const handleNav = (path: string) => {
     navigate(path);
@@ -98,6 +114,11 @@ const PlatformLayout = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
+  };
+
+  const handleStopImpersonating = () => {
+    impersonate(null);
+    navigate("/app/admin");
   };
 
   const drawerContent = (
@@ -213,6 +234,31 @@ const PlatformLayout = () => {
             </Typography>
           </Toolbar>
         </AppBar>
+
+        {isImpersonating && (
+          <Box
+            sx={{
+              bgcolor: "#ed6c02",
+              color: "white",
+              px: 2,
+              py: 0.75,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+            }}
+          >
+            <Typography variant="body2">
+              {_("admin_viewing_as")} <strong>{profile?.full_name}</strong> ({profile?.role})
+            </Typography>
+            <Chip
+              label={_("admin_stop_impersonation")}
+              size="small"
+              onClick={handleStopImpersonating}
+              sx={{ bgcolor: "white", color: "#ed6c02", fontWeight: 600, cursor: "pointer" }}
+            />
+          </Box>
+        )}
 
         <Box sx={{ flex: 1, p: { xs: 2.5, sm: 3 }, minWidth: 0 }}>
           <Outlet />

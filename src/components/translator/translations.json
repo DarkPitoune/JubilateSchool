@@ -126,6 +126,7 @@
     "booking_note": "Note (optionnel)",
     "booking_note_placeholder": "Précisez le sujet, chapitre, ou toute information utile...",
     "booking_proceed_payment": "Procéder au paiement",
+    "booking_redirecting_stripe": "Redirection vers la page de paiement…",
     "booking_error_select_time": "Veuillez sélectionner une heure et une durée.",
     "booking_error_generic": "Erreur lors de la réservation. Veuillez réessayer.",
     "booking_success_title": "Demande envoyée !",
@@ -159,7 +160,18 @@
     "bookings_cancel_teacher_dialog_title": "Annuler la réservation",
     "bookings_cancel_teacher_dialog_text": "L'élève sera remboursé et notifié de l'annulation. Voulez-vous continuer ?",
     "time_in": "Heure à",
-    "bookings_join_zoom": "Rejoindre sur Zoom"
+    "bookings_join_zoom": "Rejoindre sur Zoom",
+
+    "admin_title": "Administration",
+    "admin_total_students": "Élèves",
+    "admin_confirmed_bookings": "Cours confirmés",
+    "admin_revenue": "Revenus",
+    "admin_pending": "En attente",
+    "admin_recent_bookings": "Réservations récentes",
+    "admin_users": "Utilisateurs",
+    "admin_impersonate": "Voir comme",
+    "admin_viewing_as": "Vue en tant que",
+    "admin_stop_impersonation": "Arrêter"
   },
   "en": {
     "flag": "🇫🇷",
@@ -288,6 +300,7 @@
     "booking_note": "Note (optional)",
     "booking_note_placeholder": "Specify the topic, chapter, or any useful information...",
     "booking_proceed_payment": "Proceed to payment",
+    "booking_redirecting_stripe": "Redirecting to payment page…",
     "booking_error_select_time": "Please select a time and duration.",
     "booking_error_generic": "Booking failed. Please try again.",
     "booking_success_title": "Request sent!",
@@ -321,6 +334,17 @@
     "bookings_cancel_teacher_dialog_title": "Cancel booking",
     "bookings_cancel_teacher_dialog_text": "The student will be refunded and notified of the cancellation. Do you want to continue?",
     "time_in": "Time in",
-    "bookings_join_zoom": "Join on Zoom"
+    "bookings_join_zoom": "Join on Zoom",
+
+    "admin_title": "Administration",
+    "admin_total_students": "Students",
+    "admin_confirmed_bookings": "Confirmed sessions",
+    "admin_revenue": "Revenue",
+    "admin_pending": "Pending",
+    "admin_recent_bookings": "Recent bookings",
+    "admin_users": "Users",
+    "admin_impersonate": "View as",
+    "admin_viewing_as": "Viewing as",
+    "admin_stop_impersonation": "Stop"
   }
 }
