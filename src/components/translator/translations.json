@@ -111,7 +111,7 @@
     "students_total_hours": "Heures totales",
     "students_last_booking": "Dernier cours",
 
-    "cancel": "Annuler",
+    "cancel": "Retour",
     "save": "Enregistrer",
 
     "booking_calendar_title": "Réserver un cours",
@@ -151,7 +151,15 @@
     "bookings_reject_dialog_text": "L'autorisation de paiement sera annulée et l'élève sera notifié. Voulez-vous continuer ?",
     "bookings_action_error": "Une erreur est survenue. Veuillez réessayer.",
     "status_payment_failed": "Échec paiement",
-    "time_in": "Heure à"
+    "status_cancelled_by_student": "Annulé par l'élève",
+    "status_cancelled_by_teacher": "Annulé par le prof",
+    "bookings_cancel": "Annuler le cours",
+    "bookings_cancel_dialog_title": "Annuler la réservation",
+    "bookings_cancel_dialog_text": "Êtes-vous sûr de vouloir annuler ce cours ? Vous serez remboursé si le paiement a déjà été capturé.",
+    "bookings_cancel_teacher_dialog_title": "Annuler la réservation",
+    "bookings_cancel_teacher_dialog_text": "L'élève sera remboursé et notifié de l'annulation. Voulez-vous continuer ?",
+    "time_in": "Heure à",
+    "bookings_join_zoom": "Rejoindre sur Zoom"
   },
   "en": {
     "flag": "🇫🇷",
@@ -265,7 +273,7 @@
     "students_total_hours": "Total hours",
     "students_last_booking": "Last session",
 
-    "cancel": "Cancel",
+    "cancel": "Go back",
     "save": "Save",
 
     "booking_calendar_title": "Book a session",
@@ -305,6 +313,14 @@
     "bookings_reject_dialog_text": "The payment authorization will be released and the student will be notified. Do you want to continue?",
     "bookings_action_error": "An error occurred. Please try again.",
     "status_payment_failed": "Payment failed",
-    "time_in": "Time in"
+    "status_cancelled_by_student": "Cancelled by student",
+    "status_cancelled_by_teacher": "Cancelled by teacher",
+    "bookings_cancel": "Cancel session",
+    "bookings_cancel_dialog_title": "Cancel booking",
+    "bookings_cancel_dialog_text": "Are you sure you want to cancel this session? You will be refunded if the payment was already captured.",
+    "bookings_cancel_teacher_dialog_title": "Cancel booking",
+    "bookings_cancel_teacher_dialog_text": "The student will be refunded and notified of the cancellation. Do you want to continue?",
+    "time_in": "Time in",
+    "bookings_join_zoom": "Join on Zoom"
   }
 }

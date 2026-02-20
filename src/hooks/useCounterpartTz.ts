@@ -21,7 +21,7 @@ export function useCounterpartTz(): string | null {
         .select("timezone")
         .eq("role", "teacher")
         .limit(1)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
           if (data?.timezone) setTz(data.timezone);
         });

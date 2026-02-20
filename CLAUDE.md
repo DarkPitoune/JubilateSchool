@@ -27,6 +27,9 @@ The app has two main areas:
 3. Teacher confirms → Stripe captures payment → both notified → `confirmed`
 4. Teacher rejects → authorization released → student notified → `rejected`
 5. No response in 48h → auto-cancel via `expire-bookings` function → `expired`
+6. Either party cancels → `cancelled_by_student` or `cancelled_by_teacher`:
+   - Student can cancel if 48h+ before class → Stripe auth cancelled or refund issued
+   - Teacher can cancel any booking at any time → refund issued if already captured
 
 **Key directories:**
 - `src/views/` — landing page sections (Welcome, Classes, WhoAmI, Witnesses, ContactCost)
@@ -40,6 +43,7 @@ The app has two main areas:
 - `src/components/` — shared components (Card, theme, useResize, ProtectedRoute, RoleGate, translator system)
 - `src/components/translator/` — i18n system using React Context with localStorage persistence
 - `src/types/index.ts` — shared TypeScript interfaces (Profile, Booking, AvailabilityRange, Pricing, FreeWindow, AuthContextValue)
+- `src/hooks/useQueries.ts` — React Query hooks for data fetching (bookings, availability, pricing, free windows)
 - `src/contexts/AuthContext.tsx` — Supabase auth context (`useAuth` hook: session, profile, loading, signOut)
 - `src/lib/supabase.ts` — Supabase client instance
 - `supabase/migrations/` — SQL schema (profiles, availability_ranges, bookings, pricing + RLS)
@@ -71,9 +75,10 @@ The app has two main areas:
 
 ## Database (Supabase)
 
-- `profiles` — auto-created on signup via trigger, has `role` ('student'/'teacher')
+- `profiles` — auto-created on signup via trigger, has `role` ('student'/'teacher'), `timezone`
 - `availability_ranges` — teacher's available time blocks
-- `bookings` — student bookings with overlap prevention (EXCLUDE constraint), status tracking, Stripe payment intent
+- `bookings` — student bookings with overlap prevention (EXCLUDE constraint), status tracking, Stripe payment intent, `zoom_meeting_link`
+  - Statuses: `pending_confirmation`, `confirmed`, `rejected`, `expired`, `payment_failed`, `cancelled_by_student`, `cancelled_by_teacher`
 - `pricing` — hourly rate config
 
 RLS uses `public.is_teacher()` SECURITY DEFINER function to avoid infinite recursion when checking teacher role.
@@ -84,7 +89,8 @@ RLS uses `public.is_teacher()` SECURITY DEFINER function to avoid infinite recur
 - `stripe-webhook` — handles checkout.session.completed/expired
 - `confirm-booking` — teacher email link → captures payment → confirms
 - `reject-booking` — teacher email link → cancels auth → rejects
-- `send-email` — shared Resend utility (5 email types, bilingual)
+- `cancel-booking` — authenticated cancel by student (48h+ rule) or teacher (anytime) → Stripe cancel/refund → notification emails
+- `send-email` — shared Resend utility (bilingual email templates)
 - `expire-bookings` — cron: expires stale pending bookings after 48h
 
 ## Environment Variables
@@ -105,5 +111,7 @@ Edge Functions (Supabase secrets):
 - Prefer npm (package-lock.json)
 - `npm run build` runs `tsc --noEmit` before `vite build` for type checking
 - Code-splitting: all platform pages are lazy-loaded via `React.lazy`
+- Data fetching: `@tanstack/react-query` via custom hooks in `src/hooks/useQueries.ts`
+- Timezone support: `date-fns-tz` for timezone-aware date handling; profiles store user timezone
 - Vendor chunks: MUI, FullCalendar, Supabase, date-fns are separate chunks
 - Auth: `ProtectedRoute` for login check, `RoleGate` for role-based access

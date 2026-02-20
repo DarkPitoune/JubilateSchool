@@ -4,7 +4,11 @@
       "Bash(npm run:*)",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx web-push:*)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

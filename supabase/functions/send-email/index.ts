@@ -88,7 +88,12 @@ serve(async (req) => {
         `;
         break;
 
-      case "booking_confirmed_student":
+      case "booking_confirmed_student": {
+        const zoomBtnStudent = booking.zoom_meeting_link
+          ? studentLang === "fr"
+            ? `<p style="margin-top:16px;"><a href="${booking.zoom_meeting_link}" style="background:#2D8CFF;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Rejoindre sur Zoom</a></p>`
+            : `<p style="margin-top:16px;"><a href="${booking.zoom_meeting_link}" style="background:#2D8CFF;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Join on Zoom</a></p>`
+          : "";
         to = studentEmail;
         subject =
           studentLang === "fr"
@@ -103,6 +108,7 @@ serve(async (req) => {
           <p style="color:#888;font-size:13px;"><strong>Heure prof :</strong> ${dateStrTeacherForStudent}</p>
           <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
           <p><strong>Prix :</strong> ${price} €</p>
+          ${zoomBtnStudent}
           <p>À bientôt !</p>
         `
             : `
@@ -112,22 +118,11 @@ serve(async (req) => {
           <p style="color:#888;font-size:13px;"><strong>Teacher's time:</strong> ${dateStrTeacherForStudent}</p>
           <p><strong>Duration:</strong> ${booking.duration_minutes} min</p>
           <p><strong>Price:</strong> €${price}</p>
+          ${zoomBtnStudent}
           <p>See you soon!</p>
         `;
         break;
-
-      case "booking_confirmed_teacher":
-        to = teacherEmail;
-        subject = `Cours confirmé — ${studentName}`;
-        html = `
-          <h2>Cours confirmé</h2>
-          <p><strong>Élève :</strong> ${studentName}</p>
-          <p><strong>Date (votre heure) :</strong> ${dateStrTeacher}</p>
-          <p style="color:#888;font-size:13px;"><strong>Heure élève :</strong> ${dateStrStudentForTeacher}</p>
-          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
-          <p><strong>Prix :</strong> ${price} €</p>
-        `;
-        break;
+      }
 
       case "booking_rejected_student":
         to = studentEmail;
@@ -169,6 +164,45 @@ serve(async (req) => {
           <h2>Booking Expired</h2>
           <p>Your booking request for ${dateStrStudent} has expired because it was not processed in time.</p>
           <p>Your card was not charged.</p>
+          <p>Feel free to book another slot.</p>
+        `;
+        break;
+
+      case "booking_cancelled_by_student_teacher":
+        to = teacherEmail;
+        subject = `Cours annulé par l'élève — ${studentName}`;
+        html = `
+          <h2>Cours annulé</h2>
+          <p><strong>Élève :</strong> ${studentName}</p>
+          <p><strong>Date (votre heure) :</strong> ${dateStrTeacher}</p>
+          <p style="color:#888;font-size:13px;"><strong>Heure élève :</strong> ${dateStrStudentForTeacher}</p>
+          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
+          <p>L'élève a annulé ce cours. Le paiement a été annulé ou remboursé.</p>
+        `;
+        break;
+
+      case "booking_cancelled_by_teacher_student":
+        to = studentEmail;
+        subject =
+          studentLang === "fr"
+            ? "Votre cours a été annulé par le professeur"
+            : "Your session was cancelled by the teacher";
+        html =
+          studentLang === "fr"
+            ? `
+          <h2>Cours annulé</h2>
+          <p>Votre cours du ${dateStrStudent} a été annulé par le professeur.</p>
+          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
+          <p><strong>Prix :</strong> ${price} €</p>
+          <p>Si le paiement avait été capturé, vous serez remboursé sous quelques jours.</p>
+          <p>N'hésitez pas à réserver un autre créneau.</p>
+        `
+            : `
+          <h2>Session Cancelled</h2>
+          <p>Your session on ${dateStrStudent} was cancelled by the teacher.</p>
+          <p><strong>Duration:</strong> ${booking.duration_minutes} min</p>
+          <p><strong>Price:</strong> €${price}</p>
+          <p>If the payment was captured, you will be refunded within a few days.</p>
           <p>Feel free to book another slot.</p>
         `;
         break;

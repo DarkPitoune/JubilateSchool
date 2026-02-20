@@ -1,6 +1,3 @@
-[functions.create-checkout-session]
-verify_jwt = false
-
 [functions.confirm-booking]
 verify_jwt = false
 
@@ -13,5 +10,11 @@ verify_jwt = false
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.cancel-booking]
+verify_jwt = false
+
 [functions.expire-bookings]
+verify_jwt = false
+
+[functions.send-class-reminders]
 verify_jwt = false

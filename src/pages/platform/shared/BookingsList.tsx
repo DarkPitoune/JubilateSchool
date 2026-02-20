@@ -30,7 +30,7 @@ import { fr, enUS } from "date-fns/locale";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
-import { useBookingsList, useBookingAction } from "../../../hooks/useQueries";
+import { useBookingsList, useBookingAction, useCancelBooking } from "../../../hooks/useQueries";
 import { useCounterpartTz } from "../../../hooks/useCounterpartTz";
 import { formatCounterpartHint } from "../../../lib/timezone";
 import type { Booking, BookingStatus } from "../../../types";
@@ -41,9 +41,11 @@ const statusColors: Record<BookingStatus, ChipProps["color"]> = {
   rejected: "error",
   expired: "default",
   payment_failed: "error",
+  cancelled_by_student: "default",
+  cancelled_by_teacher: "default",
 };
 
-type DialogAction = "confirm" | "reject";
+type DialogAction = "confirm" | "reject" | "cancel";
 
 const BookingsList = () => {
   const _ = useTranslator();
@@ -63,10 +65,19 @@ const BookingsList = () => {
   const { data: bookings = [], isLoading: loading } = useBookingsList(profile?.role, profile?.id);
 
   const actionMutation = useBookingAction();
+  const cancelMutation = useCancelBooking();
 
   const statusLabel = (status: BookingStatus) => {
     const key = `status_${status}`;
     return _(key) || status;
+  };
+
+  const canCancel = (b: Booking) => {
+    if (!["pending_confirmation", "confirmed"].includes(b.status)) return false;
+    if (isTeacher) return true;
+    // Student: 48h+ before class
+    const hoursUntil = (new Date(b.start_time).getTime() - Date.now()) / (1000 * 60 * 60);
+    return hoursUntil >= 48;
   };
 
   const openDialog = (booking: Booking, action: DialogAction) => {
@@ -85,14 +96,27 @@ const BookingsList = () => {
 
     closeDialog();
 
-    actionMutation.mutate(
-      { booking: selectedBooking, action: dialogAction },
-      { onError: () => setError(_("bookings_action_error")) }
-    );
+    if (dialogAction === "cancel") {
+      cancelMutation.mutate(
+        { bookingId: selectedBooking.id },
+        { onError: () => setError(_("bookings_action_error")) }
+      );
+    } else {
+      actionMutation.mutate(
+        { booking: selectedBooking, action: dialogAction as "confirm" | "reject" },
+        { onError: () => setError(_("bookings_action_error")) }
+      );
+    }
   };
 
-  const processing = actionMutation.isPending ? actionMutation.variables?.booking.id ?? null : null;
+  const processing = actionMutation.isPending
+    ? actionMutation.variables?.booking.id ?? null
+    : cancelMutation.isPending
+      ? cancelMutation.variables?.bookingId ?? null
+      : null;
   const hasPendingBookings = isTeacher && bookings.some((b) => b.status === "pending_confirmation");
+  const hasActions = hasPendingBookings || bookings.some((b) => canCancel(b));
+  const hasZoomLinks = bookings.some((b) => b.zoom_meeting_link);
 
   return (
     <Box>
@@ -147,36 +171,69 @@ const BookingsList = () => {
                       { style: "currency", currency: "eur" }
                     ).format(b.price_cents / 100)}
                   </Typography>
-                  {b.status === "pending_confirmation" && isTeacher && (
+                  {b.status === "confirmed" && b.zoom_meeting_link && (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      fullWidth
+                      href={b.zoom_meeting_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ mt: 1, bgcolor: "#2D8CFF", "&:hover": { bgcolor: "#1a7ae6" } }}
+                    >
+                      {_("bookings_join_zoom")}
+                    </Button>
+                  )}
+                  {(b.status === "pending_confirmation" && isTeacher || canCancel(b)) && (
                     <Box sx={{ display: "flex", gap: 1, mt: 1.5 }}>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="success"
-                        fullWidth
-                        disabled={processing === b.id}
-                        onClick={() => openDialog(b, "confirm")}
-                      >
-                        {processing === b.id ? (
-                          <CircularProgress size={20} color="inherit" />
-                        ) : (
-                          _("bookings_confirm")
-                        )}
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="error"
-                        fullWidth
-                        disabled={processing === b.id}
-                        onClick={() => openDialog(b, "reject")}
-                      >
-                        {processing === b.id ? (
-                          <CircularProgress size={20} color="inherit" />
-                        ) : (
-                          _("bookings_reject")
-                        )}
-                      </Button>
+                      {b.status === "pending_confirmation" && isTeacher && (
+                        <>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="success"
+                            fullWidth
+                            disabled={processing === b.id}
+                            onClick={() => openDialog(b, "confirm")}
+                          >
+                            {processing === b.id ? (
+                              <CircularProgress size={20} color="inherit" />
+                            ) : (
+                              _("bookings_confirm")
+                            )}
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="error"
+                            fullWidth
+                            disabled={processing === b.id}
+                            onClick={() => openDialog(b, "reject")}
+                          >
+                            {processing === b.id ? (
+                              <CircularProgress size={20} color="inherit" />
+                            ) : (
+                              _("bookings_reject")
+                            )}
+                          </Button>
+                        </>
+                      )}
+                      {canCancel(b) && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          fullWidth
+                          disabled={processing === b.id}
+                          onClick={() => openDialog(b, "cancel")}
+                        >
+                          {processing === b.id ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            _("bookings_cancel")
+                          )}
+                        </Button>
+                      )}
                     </Box>
                   )}
                 </CardContent>
@@ -202,7 +259,12 @@ const BookingsList = () => {
                   <TableCell sx={{ color: "white" }} align="center">
                     {_("bookings_status")}
                   </TableCell>
-                  {hasPendingBookings && (
+                  {hasZoomLinks && (
+                    <TableCell sx={{ color: "white" }} align="center">
+                      Zoom
+                    </TableCell>
+                  )}
+                  {hasActions && (
                     <TableCell sx={{ color: "white" }} align="center">
                       {_("bookings_actions")}
                     </TableCell>
@@ -241,38 +303,71 @@ const BookingsList = () => {
                         size="small"
                       />
                     </TableCell>
-                    {hasPendingBookings && (
+                    {hasZoomLinks && (
                       <TableCell align="center">
-                        {b.status === "pending_confirmation" ? (
-                          <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                        {b.status === "confirmed" && b.zoom_meeting_link && (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            href={b.zoom_meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ bgcolor: "#2D8CFF", "&:hover": { bgcolor: "#1a7ae6" }, textTransform: "none" }}
+                          >
+                            {_("bookings_join_zoom")}
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
+                    {hasActions && (
+                      <TableCell align="center">
+                        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                          {b.status === "pending_confirmation" && isTeacher && (
+                            <>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                disabled={processing === b.id}
+                                onClick={() => openDialog(b, "confirm")}
+                              >
+                                {processing === b.id ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  _("bookings_confirm")
+                                )}
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="error"
+                                disabled={processing === b.id}
+                                onClick={() => openDialog(b, "reject")}
+                              >
+                                {processing === b.id ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  _("bookings_reject")
+                                )}
+                              </Button>
+                            </>
+                          )}
+                          {canCancel(b) && (
                             <Button
                               size="small"
-                              variant="contained"
-                              color="success"
-                              disabled={processing === b.id}
-                              onClick={() => openDialog(b, "confirm")}
-                            >
-                              {processing === b.id ? (
-                                <CircularProgress size={20} color="inherit" />
-                              ) : (
-                                _("bookings_confirm")
-                              )}
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="contained"
+                              variant="outlined"
                               color="error"
                               disabled={processing === b.id}
-                              onClick={() => openDialog(b, "reject")}
+                              onClick={() => openDialog(b, "cancel")}
                             >
                               {processing === b.id ? (
                                 <CircularProgress size={20} color="inherit" />
                               ) : (
-                                _("bookings_reject")
+                                _("bookings_cancel")
                               )}
                             </Button>
-                          </Box>
-                        ) : null}
+                          )}
+                        </Box>
                       </TableCell>
                     )}
                   </TableRow>
@@ -286,13 +381,21 @@ const BookingsList = () => {
         <DialogTitle>
           {dialogAction === "confirm"
             ? _("bookings_confirm_dialog_title")
-            : _("bookings_reject_dialog_title")}
+            : dialogAction === "reject"
+              ? _("bookings_reject_dialog_title")
+              : isTeacher
+                ? _("bookings_cancel_teacher_dialog_title")
+                : _("bookings_cancel_dialog_title")}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
             {dialogAction === "confirm"
               ? _("bookings_confirm_dialog_text")
-              : _("bookings_reject_dialog_text")}
+              : dialogAction === "reject"
+                ? _("bookings_reject_dialog_text")
+                : isTeacher
+                  ? _("bookings_cancel_teacher_dialog_text")
+                  : _("bookings_cancel_dialog_text")}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -304,7 +407,9 @@ const BookingsList = () => {
           >
             {dialogAction === "confirm"
               ? _("bookings_confirm")
-              : _("bookings_reject")}
+              : dialogAction === "reject"
+                ? _("bookings_reject")
+                : _("bookings_cancel")}
           </Button>
         </DialogActions>
       </Dialog>

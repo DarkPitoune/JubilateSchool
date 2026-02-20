@@ -25,7 +25,9 @@ export type BookingStatus =
   | "confirmed"
   | "rejected"
   | "expired"
-  | "payment_failed";
+  | "payment_failed"
+  | "cancelled_by_student"
+  | "cancelled_by_teacher";
 
 export interface Booking {
   id: string;
@@ -39,6 +41,7 @@ export interface Booking {
   status: BookingStatus;
   stripe_payment_intent_id: string | null;
   confirmation_token: string;
+  zoom_meeting_link: string | null;
   created_at: string;
   profiles?: { full_name: string; email?: string; id?: string; timezone?: string };
 }

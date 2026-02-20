@@ -6,6 +6,7 @@ import {
   Grid,
   Chip,
   CircularProgress,
+  Button,
   type ChipProps,
 } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
@@ -25,6 +26,8 @@ const statusColors: Record<BookingStatus, ChipProps["color"]> = {
   rejected: "error",
   expired: "default",
   payment_failed: "error",
+  cancelled_by_student: "default",
+  cancelled_by_teacher: "default",
 };
 
 const TeacherDashboard = () => {
@@ -144,21 +147,36 @@ const TeacherDashboard = () => {
         ) : (
           upcomingBookings.map((booking) => (
             <Card key={booking.id} sx={{ mb: 1 }}>
-              <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.5, "&:last-child": { pb: 1.5 }, gap: 1, flexWrap: "wrap" }}>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }} noWrap>
-                    {booking.profiles?.full_name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "#666" }} noWrap>
-                    {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
-                  </Typography>
-                  {booking.profiles?.timezone && (
-                    <Typography variant="caption" sx={{ color: "#999" }}>
-                      {formatCounterpartHint(booking.start_time, booking.profiles.timezone, lang, locale)}
+              <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }} noWrap>
+                      {booking.profiles?.full_name}
                     </Typography>
-                  )}
+                    <Typography variant="body2" sx={{ color: "#666" }} noWrap>
+                      {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
+                    </Typography>
+                    {booking.profiles?.timezone && (
+                      <Typography variant="caption" sx={{ color: "#999" }}>
+                        {formatCounterpartHint(booking.start_time, booking.profiles.timezone, lang, locale)}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Chip label={_("status_confirmed")} color={statusColors.confirmed} size="small" sx={{ flexShrink: 0 }} />
                 </Box>
-                <Chip label={_("status_confirmed")} color={statusColors.confirmed} size="small" />
+                {booking.zoom_meeting_link && (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    fullWidth
+                    href={booking.zoom_meeting_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ mt: 1, bgcolor: "#2D8CFF", "&:hover": { bgcolor: "#1a7ae6" }, textTransform: "none" }}
+                  >
+                    {_("bookings_join_zoom")}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))

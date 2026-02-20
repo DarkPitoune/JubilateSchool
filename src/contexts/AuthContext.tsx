@@ -49,7 +49,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // When the tab becomes visible again after being backgrounded,
+    // force a token refresh so the JWT is fresh before any queries fire.
+    // getSession() only returns the cached session — refreshSession() actually
+    // contacts the server and issues a new access token.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        supabase.auth.refreshSession();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   const signOut = async () => {

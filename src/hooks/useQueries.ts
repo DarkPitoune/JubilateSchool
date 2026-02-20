@@ -43,6 +43,24 @@ export function useBookingAction() {
   });
 }
 
+export function useCancelBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ bookingId }: { bookingId: string }) => {
+      const { error } = await supabase.functions.invoke("cancel-booking", {
+        body: { booking_id: bookingId },
+      });
+      if (error) throw new Error(error.message || "Request failed");
+      return { bookingId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
 // ── Student calendar data ──
 
 export function useAvailabilityRangesForStudents() {

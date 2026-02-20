@@ -7,6 +7,73 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
 });
 
+async function createZoomMeeting(
+  startTime: string,
+  durationMinutes: number,
+  studentName: string
+): Promise<string | null> {
+  try {
+    const accountId = Deno.env.get("ZOOM_ACCOUNT_ID");
+    const clientId = Deno.env.get("ZOOM_CLIENT_ID");
+    const clientSecret = Deno.env.get("ZOOM_CLIENT_SECRET");
+
+    if (!accountId || !clientId || !clientSecret) {
+      console.log("Zoom credentials not configured, skipping meeting creation");
+      return null;
+    }
+
+    // Get access token
+    const tokenRes = await fetch(
+      `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${accountId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    if (!tokenRes.ok) {
+      console.error("Zoom token error:", await tokenRes.text());
+      return null;
+    }
+
+    const { access_token } = await tokenRes.json();
+
+    // Create meeting
+    const meetingRes = await fetch("https://api.zoom.us/v2/users/me/meetings", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        topic: `Jubilate School — ${studentName}`,
+        type: 2,
+        start_time: startTime,
+        duration: durationMinutes,
+        timezone: "UTC",
+        settings: {
+          join_before_host: true,
+          waiting_room: false,
+        },
+      }),
+    });
+
+    if (!meetingRes.ok) {
+      console.error("Zoom meeting error:", await meetingRes.text());
+      return null;
+    }
+
+    const meeting = await meetingRes.json();
+    return meeting.join_url;
+  } catch (err) {
+    console.error("Zoom meeting creation failed:", err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -26,7 +93,7 @@ serve(async (req) => {
     // Find the booking by confirmation token
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*")
+      .select("*, profiles!bookings_student_id_fkey(full_name)")
       .eq("confirmation_token", token)
       .eq("status", "pending_confirmation")
       .single();
@@ -46,10 +113,18 @@ serve(async (req) => {
       await stripe.paymentIntents.capture(booking.stripe_payment_intent_id);
     }
 
+    // Create Zoom meeting (best-effort)
+    const studentName = booking.profiles?.full_name || "Student";
+    const zoomLink = await createZoomMeeting(
+      booking.start_time,
+      booking.duration_minutes,
+      studentName
+    );
+
     // Update booking status
     await supabaseAdmin
       .from("bookings")
-      .update({ status: "confirmed" })
+      .update({ status: "confirmed", zoom_meeting_link: zoomLink })
       .eq("id", booking.id);
 
     // Send confirmation emails
@@ -60,17 +135,10 @@ serve(async (req) => {
       },
     });
 
-    await supabaseAdmin.functions.invoke("send-email", {
-      body: {
-        type: "booking_confirmed_teacher",
-        booking_id: booking.id,
-      },
-    });
-
     return new Response(
       renderHTML(
         "Booking Confirmed ✓",
-        "The payment has been captured and both parties have been notified."
+        "The payment has been captured and the student has been notified."
       ),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html" } }
     );

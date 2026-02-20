@@ -26,6 +26,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslator } from "../../components";
 import CounterpartClock from "../../components/CounterpartClock";
+import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { supabase } from "../../lib/supabase";
 
 const DRAWER_WIDTH = 240;
@@ -40,6 +41,7 @@ const PlatformLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isTeacher = profile?.role === "teacher";
+  usePushSubscription(profile?.id);
 
   // Fetch counterpart timezone
   const [counterpartTz, setCounterpartTz] = useState<string | null>(null);
@@ -55,7 +57,7 @@ const PlatformLayout = () => {
         .select("timezone")
         .eq("role", "teacher")
         .limit(1)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
           if (data?.timezone) setCounterpartTz(data.timezone);
         });
@@ -95,7 +97,7 @@ const PlatformLayout = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/");
+    navigate("/login");
   };
 
   const drawerContent = (
@@ -207,7 +209,7 @@ const PlatformLayout = () => {
             </Typography>
             {counterpartTz && <CounterpartClock timezone={counterpartTz} />}
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              {profile?.full_name}
+              {profile?.full_name?.split(" ")[0]}
             </Typography>
           </Toolbar>
         </AppBar>
