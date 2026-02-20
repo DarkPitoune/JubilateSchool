@@ -142,7 +142,16 @@
     "bookings_student": "Élève",
     "bookings_price": "Prix",
     "bookings_status": "Statut",
-    "status_payment_failed": "Échec paiement"
+    "bookings_actions": "Actions",
+    "bookings_confirm": "Accepter",
+    "bookings_reject": "Refuser",
+    "bookings_confirm_dialog_title": "Confirmer la réservation",
+    "bookings_confirm_dialog_text": "Le paiement sera capturé et l'élève sera notifié. Voulez-vous continuer ?",
+    "bookings_reject_dialog_title": "Refuser la réservation",
+    "bookings_reject_dialog_text": "L'autorisation de paiement sera annulée et l'élève sera notifié. Voulez-vous continuer ?",
+    "bookings_action_error": "Une erreur est survenue. Veuillez réessayer.",
+    "status_payment_failed": "Échec paiement",
+    "time_in": "Heure à"
   },
   "en": {
     "flag": "🇫🇷",
@@ -287,6 +296,15 @@
     "bookings_student": "Student",
     "bookings_price": "Price",
     "bookings_status": "Status",
-    "status_payment_failed": "Payment failed"
+    "bookings_actions": "Actions",
+    "bookings_confirm": "Accept",
+    "bookings_reject": "Reject",
+    "bookings_confirm_dialog_title": "Confirm booking",
+    "bookings_confirm_dialog_text": "Payment will be captured and the student will be notified. Do you want to continue?",
+    "bookings_reject_dialog_title": "Reject booking",
+    "bookings_reject_dialog_text": "The payment authorization will be released and the student will be notified. Do you want to continue?",
+    "bookings_action_error": "An error occurred. Please try again.",
+    "status_payment_failed": "Payment failed",
+    "time_in": "Time in"
   }
 }

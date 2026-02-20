@@ -19,7 +19,7 @@ serve(async (req) => {
     if (!token) {
       return new Response(renderHTML("Error", "Missing confirmation token."), {
         status: 400,
-        headers: { "Content-Type": "text/html" },
+        headers: { ...corsHeaders, "Content-Type": "text/html" },
       });
     }
 
@@ -37,7 +37,7 @@ serve(async (req) => {
           "Not found",
           "Booking not found or already processed."
         ),
-        { status: 404, headers: { "Content-Type": "text/html" } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "text/html" } }
       );
     }
 
@@ -65,13 +65,13 @@ serve(async (req) => {
         "Booking Rejected",
         "The authorization has been released and the student has been notified. Their card was not charged."
       ),
-      { status: 200, headers: { "Content-Type": "text/html" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html" } }
     );
   } catch (err) {
     console.error("Error:", err);
     return new Response(
       renderHTML("Error", `Something went wrong: ${err.message}`),
-      { status: 500, headers: { "Content-Type": "text/html" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "text/html" } }
     );
   }
 });

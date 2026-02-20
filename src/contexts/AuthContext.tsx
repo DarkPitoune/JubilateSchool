@@ -30,6 +30,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       if (session?.user) {
         const p = await fetchProfile(session.user.id);
+        if (p) {
+          // Auto-detect browser timezone and sync if different
+          const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (browserTz && browserTz !== p.timezone) {
+            supabase
+              .from("profiles")
+              .update({ timezone: browserTz })
+              .eq("id", p.id)
+              .then(() => {});
+            p.timezone = browserTz;
+          }
+        }
         setProfile(p);
       } else {
         setProfile(null);

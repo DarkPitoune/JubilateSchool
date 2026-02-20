@@ -1,10 +1,35 @@
-import { Link as RouterLink } from "react-router-dom";
+import { useEffect } from "react";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import { Box, Card, CardContent, Typography, Button } from "@mui/material";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslator } from "../../../components";
+import { supabase } from "../../../lib/supabase";
 
 const BookingCancel = () => {
   const _ = useTranslator();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const bookingId = searchParams.get("booking_id");
+    if (!bookingId) return;
+
+    supabase
+      .from("bookings")
+      .delete()
+      .eq("id", bookingId)
+      .eq("status", "pending_confirmation")
+      .then(({ error }) => {
+        if (error) {
+          console.error("Failed to cancel booking:", error);
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["bookings"] });
+          queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        }
+      });
+  }, [searchParams, queryClient]);
 
   return (
     <Box

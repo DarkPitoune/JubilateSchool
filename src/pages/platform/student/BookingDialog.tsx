@@ -16,6 +16,9 @@ import { fr, enUS } from "date-fns/locale";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
+import { useLang } from "../../../hooks/useLang";
+import { useCounterpartTz } from "../../../hooks/useCounterpartTz";
+import { formatCounterpartHint } from "../../../lib/timezone";
 import type { FreeWindow, Pricing } from "../../../types";
 
 interface BookingDialogProps {
@@ -28,8 +31,10 @@ interface BookingDialogProps {
 
 const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }: BookingDialogProps) => {
   const _ = useTranslator();
+  const lang = useLang();
   const { profile } = useAuth();
-  const locale = profile?.preferred_lang === "en" ? enUS : fr;
+  const locale = lang === "en" ? enUS : fr;
+  const teacherTz = useCounterpartTz();
 
   const [startTime, setStartTime] = useState("");
   const [duration, setDuration] = useState(60);
@@ -71,7 +76,7 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
   }, [pricing, duration]);
 
   const formatPrice = (cents: number) => {
-    return new Intl.NumberFormat(profile?.preferred_lang === "fr" ? "fr-FR" : "en-US", {
+    return new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
       currency: pricing?.currency || "eur",
     }).format(cents / 100);
@@ -99,6 +104,7 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
           end_time: endTime,
           duration_minutes: duration,
           note: note.trim(),
+          site_url: window.location.origin,
         },
       }
     );
@@ -134,11 +140,18 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
           </Alert>
         )}
 
-        <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
+        <Typography variant="body2" sx={{ mb: 0.5, color: "#666" }}>
           {_("booking_window_label")}:{" "}
           {freeWindow &&
             `${format(new Date(freeWindow.start), "PPPp", { locale })} — ${format(new Date(freeWindow.end), "p", { locale })}`}
         </Typography>
+        {freeWindow && teacherTz && (
+          <Typography variant="caption" sx={{ mb: 2, display: "block", color: "#999" }}>
+            {formatCounterpartHint(freeWindow.start, teacherTz, lang, locale)}
+            {" — "}
+            {formatCounterpartHint(freeWindow.end, teacherTz, lang, locale)}
+          </Typography>
+        )}
 
         <TextField
           select
@@ -158,6 +171,11 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
           {startOptions.map((opt) => (
             <MenuItem key={opt} value={opt}>
               {format(new Date(opt), "p", { locale })}
+              {teacherTz && (
+                <Typography component="span" variant="caption" sx={{ ml: 1, color: "#999" }}>
+                  {formatCounterpartHint(opt, teacherTz, lang, locale)}
+                </Typography>
+              )}
             </MenuItem>
           ))}
         </TextField>

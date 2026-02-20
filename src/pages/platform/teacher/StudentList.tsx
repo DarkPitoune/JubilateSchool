@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -9,83 +8,27 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Card,
+  CardContent,
   Chip,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
-import { supabase } from "../../../lib/supabase";
-import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
-import type { Booking } from "../../../types";
-
-interface StudentSummary {
-  id: string;
-  full_name: string;
-  email: string;
-  bookings: Booking[];
-  totalConfirmed: number;
-  totalMinutes: number;
-}
+import { useLang } from "../../../hooks/useLang";
+import { useStudentList } from "../../../hooks/useQueries";
 
 const StudentList = () => {
   const _ = useTranslator();
-  const { profile } = useAuth();
-  const [students, setStudents] = useState<StudentSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const lang = useLang();
+  const locale = lang === "en" ? enUS : fr;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const locale = profile?.preferred_lang === "en" ? enUS : fr;
-
-  useEffect(() => {
-    const fetchStudents = async () => {
-      // Get all bookings with student profiles
-      const { data: bookingsData } = await supabase
-        .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(id, full_name, email)")
-        .in("status", ["confirmed", "pending_confirmation"])
-        .order("start_time", { ascending: false });
-
-      if (!bookingsData) {
-        setLoading(false);
-        return;
-      }
-
-      // Group by student
-      const studentMap = new Map<string, StudentSummary>();
-      for (const booking of bookingsData as unknown as Booking[]) {
-        const sid = booking.student_id;
-        if (!studentMap.has(sid)) {
-          studentMap.set(sid, {
-            id: sid,
-            full_name: booking.profiles?.full_name || "",
-            email: booking.profiles?.email || "",
-            bookings: [],
-            totalConfirmed: 0,
-            totalMinutes: 0,
-          });
-        }
-        const s = studentMap.get(sid)!;
-        s.bookings.push(booking);
-        if (booking.status === "confirmed") {
-          s.totalConfirmed++;
-          s.totalMinutes += booking.duration_minutes;
-        }
-      }
-
-      setStudents(Array.from(studentMap.values()));
-      setLoading(false);
-    };
-
-    fetchStudents();
-  }, []);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const { data: students = [], isLoading: loading } = useStudentList();
 
   return (
     <Box>
@@ -93,10 +36,43 @@ const StudentList = () => {
         {_("students_title")}
       </Typography>
 
-      {students.length === 0 ? (
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : students.length === 0 ? (
         <Typography variant="body1" sx={{ color: "#888" }}>
           {_("students_empty")}
         </Typography>
+      ) : isMobile ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {students.map((student) => {
+            const lastBooking = student.bookings[0];
+            return (
+              <Card key={student.id} variant="outlined" sx={{ borderRadius: 2 }}>
+                <CardContent sx={{ pb: 1.5, "&:last-child": { pb: 1.5 } }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {student.full_name}
+                    </Typography>
+                    <Chip label={`${student.totalConfirmed} ${_("students_sessions").toLowerCase()}`} size="small" color="primary" />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {student.email}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {_("students_total_hours")}: {(student.totalMinutes / 60).toFixed(1)}h
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {_("students_last_booking")}: {lastBooking
+                      ? format(new Date(lastBooking.start_time), "PPP", { locale })
+                      : "—"}
+                  </Typography>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
       ) : (
         <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
           <Table sx={{ minWidth: 500 }}>

@@ -31,6 +31,7 @@ serve(async (req) => {
       end_time,
       duration_minutes,
       note,
+      site_url,
     } = await req.json();
 
     // Validate the availability range exists
@@ -137,15 +138,15 @@ serve(async (req) => {
       );
     }
 
-    // Get student profile for Stripe metadata
+    // Get student profile for Stripe metadata and timezone
     const { data: studentProfile } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, email")
+      .select("full_name, email, timezone")
       .eq("id", user.id)
       .single();
 
     // Create Stripe Checkout Session (authorize only, don't capture)
-    const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:3000";
+    const siteUrl = site_url || Deno.env.get("SITE_URL") || "http://localhost:3000";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -160,7 +161,7 @@ serve(async (req) => {
             unit_amount: price_cents,
             product_data: {
               name: `Jubilate School — ${duration_minutes} min`,
-              description: `Session on ${new Date(start_time).toLocaleDateString()}`,
+              description: `Session on ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: studentProfile?.timezone || "Europe/Paris" }).format(new Date(start_time))}`,
             },
           },
           quantity: 1,
@@ -171,7 +172,7 @@ serve(async (req) => {
         student_name: studentProfile?.full_name || "",
       },
       success_url: `${siteUrl}/app/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/app/booking/cancel`,
+      cancel_url: `${siteUrl}/app/booking/cancel?booking_id=${booking.id}`,
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minutes
     });
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -18,53 +18,35 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateSelectArg, EventClickArg } from "@fullcalendar/core";
+import frLocale from "@fullcalendar/core/locales/fr";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
-import type { AvailabilityRange, Booking } from "../../../types";
+import { useLang } from "../../../hooks/useLang";
+import { useTeacherAvailability } from "../../../hooks/useQueries";
+import type { AvailabilityRange } from "../../../types";
 
 const AvailabilityManager = () => {
   const _ = useTranslator();
+  const lang = useLang();
   const { profile } = useAuth();
   const theme = useTheme();
   const bigScreen = useMediaQuery(theme.breakpoints.up("sm"));
-  const [ranges, setRanges] = useState<AvailabilityRange[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRange, setEditingRange] = useState<AvailabilityRange | null>(null);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [error, setError] = useState("");
 
-  const fetchData = useCallback(async () => {
-    const { data: rangesData } = await supabase
-      .from("availability_ranges")
-      .select("*")
-      .eq("teacher_id", profile!.id)
-      .order("start_time", { ascending: true });
+  const { data, isLoading: loading } = useTeacherAvailability(profile?.id);
+  const ranges = data?.ranges ?? [];
+  const bookings = data?.bookings ?? [];
 
-    setRanges((rangesData || []) as AvailabilityRange[]);
-
-    if (rangesData && rangesData.length > 0) {
-      const rangeIds = rangesData.map((r) => r.id);
-      const { data: bookingsData } = await supabase
-        .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(full_name)")
-        .in("availability_range_id", rangeIds)
-        .in("status", ["pending_confirmation", "confirmed"]);
-
-      setBookings((bookingsData || []) as Booking[]);
-    } else {
-      setBookings([]);
-    }
-
-    setLoading(false);
-  }, [profile]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["availability-ranges"] });
+  };
 
   const toLocalDatetime = (date: Date | string) => {
     const d = new Date(date);
@@ -83,7 +65,6 @@ const AvailabilityManager = () => {
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
-    // Only allow editing availability ranges, not bookings
     if (event.extendedProps.type === "booking") return;
 
     const range = ranges.find((r) => r.id === event.id);
@@ -107,7 +88,6 @@ const AvailabilityManager = () => {
     }
 
     if (editingRange) {
-      // Check for confirmed bookings that would be outside new range
       const conflicting = bookings.filter(
         (b) =>
           b.availability_range_id === editingRange.id &&
@@ -144,7 +124,7 @@ const AvailabilityManager = () => {
     }
 
     setDialogOpen(false);
-    fetchData();
+    invalidate();
   };
 
   const handleDelete = async () => {
@@ -169,10 +149,9 @@ const AvailabilityManager = () => {
     }
 
     setDialogOpen(false);
-    fetchData();
+    invalidate();
   };
 
-  // Build calendar events
   const calendarEvents = [
     ...ranges.map((r) => ({
       id: r.id,
@@ -194,14 +173,6 @@ const AvailabilityManager = () => {
     })),
   ];
 
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Box>
       <Typography variant="h4" sx={{ mb: 3, color: "#030340", fontFamily: "'Kalam', cursive" }}>
@@ -211,6 +182,12 @@ const AvailabilityManager = () => {
         {_("avail_instructions")}
       </Typography>
 
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+      <>
       <Box sx={{ bgcolor: "white", borderRadius: 1, p: { xs: 1, sm: 2 }, overflowX: "auto", "& .fc": { fontFamily: "inherit" }, "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 } }}>
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -220,7 +197,8 @@ const AvailabilityManager = () => {
               ? { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }
               : { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek" }
           }
-          locale={profile?.preferred_lang === "fr" ? "fr" : "en"}
+          locales={[frLocale]}
+          locale={lang === "fr" ? "fr" : "en"}
           selectable
           selectMirror
           select={handleSelect}
@@ -277,6 +255,8 @@ const AvailabilityManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      </>
+      )}
     </Box>
   );
 };

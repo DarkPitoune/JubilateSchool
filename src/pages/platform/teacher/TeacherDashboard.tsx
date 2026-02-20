@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -14,10 +13,11 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import PeopleIcon from "@mui/icons-material/People";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
-import { supabase } from "../../../lib/supabase";
 import { useTranslator } from "../../../components";
-import { useAuth } from "../../../contexts/AuthContext";
-import type { Booking, BookingStatus } from "../../../types";
+import { useLang } from "../../../hooks/useLang";
+import { useDashboard } from "../../../hooks/useQueries";
+import { formatCounterpartHint } from "../../../lib/timezone";
+import type { BookingStatus } from "../../../types";
 
 const statusColors: Record<BookingStatus, ChipProps["color"]> = {
   pending_confirmation: "warning",
@@ -29,59 +29,13 @@ const statusColors: Record<BookingStatus, ChipProps["color"]> = {
 
 const TeacherDashboard = () => {
   const _ = useTranslator();
-  const { profile } = useAuth();
-  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
-  const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
-  const [studentCount, setStudentCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const lang = useLang();
+  const locale = lang === "en" ? enUS : fr;
 
-  const locale = profile?.preferred_lang === "en" ? enUS : fr;
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const now = new Date().toISOString();
-      const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      // Upcoming confirmed bookings (next 7 days)
-      const { data: upcoming } = await supabase
-        .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(full_name)")
-        .eq("status", "confirmed")
-        .gte("start_time", now)
-        .lte("start_time", weekFromNow)
-        .order("start_time", { ascending: true });
-
-      // Pending bookings awaiting confirmation
-      const { data: pending } = await supabase
-        .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(full_name)")
-        .eq("status", "pending_confirmation")
-        .order("created_at", { ascending: false });
-
-      // Unique student count
-      const { data: students } = await supabase
-        .from("bookings")
-        .select("student_id")
-        .in("status", ["confirmed", "pending_confirmation"]);
-
-      const uniqueStudents = new Set(students?.map((b) => b.student_id) || []);
-
-      setUpcomingBookings((upcoming || []) as Booking[]);
-      setPendingBookings((pending || []) as Booking[]);
-      setStudentCount(uniqueStudents.size);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const { data, isLoading: loading } = useDashboard();
+  const upcomingBookings = data?.upcomingBookings ?? [];
+  const pendingBookings = data?.pendingBookings ?? [];
+  const studentCount = data?.studentCount ?? 0;
 
   return (
     <Box>
@@ -89,6 +43,12 @@ const TeacherDashboard = () => {
         {_("dashboard_title")}
       </Typography>
 
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+      <>
       {/* Stats cards */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>
@@ -154,6 +114,11 @@ const TeacherDashboard = () => {
                   <Typography variant="body2" sx={{ color: "#666" }} noWrap>
                     {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
                   </Typography>
+                  {booking.profiles?.timezone && (
+                    <Typography variant="caption" sx={{ color: "#999" }}>
+                      {formatCounterpartHint(booking.start_time, booking.profiles.timezone, lang, locale)}
+                    </Typography>
+                  )}
                   {booking.note && (
                     <Typography variant="body2" sx={{ color: "#888", fontStyle: "italic", mt: 0.5 }}>
                       {booking.note}
@@ -187,6 +152,11 @@ const TeacherDashboard = () => {
                   <Typography variant="body2" sx={{ color: "#666" }} noWrap>
                     {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
                   </Typography>
+                  {booking.profiles?.timezone && (
+                    <Typography variant="caption" sx={{ color: "#999" }}>
+                      {formatCounterpartHint(booking.start_time, booking.profiles.timezone, lang, locale)}
+                    </Typography>
+                  )}
                 </Box>
                 <Chip label={_("status_confirmed")} color={statusColors.confirmed} size="small" />
               </CardContent>
@@ -194,6 +164,8 @@ const TeacherDashboard = () => {
           ))
         )}
       </Box>
+      </>
+      )}
     </Box>
   );
 };

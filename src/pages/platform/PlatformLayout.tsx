@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   AppBar,
@@ -25,6 +25,8 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import HomeIcon from "@mui/icons-material/Home";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslator } from "../../components";
+import CounterpartClock from "../../components/CounterpartClock";
+import { supabase } from "../../lib/supabase";
 
 const DRAWER_WIDTH = 240;
 
@@ -39,15 +41,48 @@ const PlatformLayout = () => {
 
   const isTeacher = profile?.role === "teacher";
 
+  // Fetch counterpart timezone
+  const [counterpartTz, setCounterpartTz] = useState<string | null>(null);
+  useEffect(() => {
+    if (!profile) return;
+    if (isTeacher) {
+      // Teacher sees France time (most students are there)
+      setCounterpartTz("Europe/Paris");
+    } else {
+      // Student fetches the teacher's timezone
+      supabase
+        .from("profiles")
+        .select("timezone")
+        .eq("role", "teacher")
+        .limit(1)
+        .single()
+        .then(({ data }) => {
+          if (data?.timezone) setCounterpartTz(data.timezone);
+        });
+    }
+  }, [profile, isTeacher]);
+
   const teacherLinks = [
-    { label: _("nav_dashboard"), path: "/app/dashboard", icon: <DashboardIcon /> },
-    { label: _("nav_availability"), path: "/app/availability", icon: <EventAvailableIcon /> },
+    {
+      label: _("nav_dashboard"),
+      path: "/app/dashboard",
+      icon: <DashboardIcon />,
+    },
+    {
+      label: _("nav_availability"),
+      path: "/app/availability",
+      icon: <EventAvailableIcon />,
+    },
     { label: _("nav_students"), path: "/app/students", icon: <PeopleIcon /> },
     { label: _("nav_bookings"), path: "/app/bookings", icon: <ListAltIcon /> },
   ];
 
   const studentLinks = [
-    { label: _("nav_calendar"), path: "/app/calendar", icon: <CalendarMonthIcon /> },
+    {
+      label: _("nav_calendar"),
+      path: "/app/calendar",
+      icon: <CalendarMonthIcon />,
+    },
     { label: _("nav_bookings"), path: "/app/bookings", icon: <ListAltIcon /> },
   ];
 
@@ -89,11 +124,15 @@ const PlatformLayout = () => {
       <Divider />
       <List>
         <ListItemButton onClick={() => navigate("/")}>
-          <ListItemIcon><HomeIcon /></ListItemIcon>
+          <ListItemIcon>
+            <HomeIcon />
+          </ListItemIcon>
           <ListItemText primary={_("nav_home")} />
         </ListItemButton>
         <ListItemButton onClick={handleSignOut}>
-          <ListItemIcon><LogoutIcon /></ListItemIcon>
+          <ListItemIcon>
+            <LogoutIcon />
+          </ListItemIcon>
           <ListItemText primary={_("nav_sign_out")} />
         </ListItemButton>
       </List>
@@ -108,7 +147,10 @@ const PlatformLayout = () => {
           sx={{
             width: DRAWER_WIDTH,
             flexShrink: 0,
-            "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
           }}
         >
           {drawerContent}
@@ -119,14 +161,25 @@ const PlatformLayout = () => {
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
           sx={{
-            "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
           }}
         >
           {drawerContent}
         </Drawer>
       )}
 
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
         <AppBar
           position="sticky"
           sx={{
@@ -145,16 +198,21 @@ const PlatformLayout = () => {
                 <MenuIcon />
               </IconButton>
             )}
-            <Typography variant="h6" noWrap sx={{ flex: 1, fontFamily: "'Kalam', cursive" }}>
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{ flex: 1, fontFamily: "'Kalam', cursive" }}
+            >
               Jubilate School
             </Typography>
+            {counterpartTz && <CounterpartClock timezone={counterpartTz} />}
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
               {profile?.full_name}
             </Typography>
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ flex: 1, p: { xs: 1.5, sm: 3 }, minWidth: 0 }}>
+        <Box sx={{ flex: 1, p: { xs: 2.5, sm: 3 }, minWidth: 0 }}>
           <Outlet />
         </Box>
       </Box>

@@ -17,7 +17,7 @@ serve(async (req) => {
     // Fetch booking with student profile
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, profiles!bookings_student_id_fkey(full_name, email, preferred_lang)")
+      .select("*, profiles!bookings_student_id_fkey(full_name, email, preferred_lang, timezone)")
       .eq("id", booking_id)
       .single();
 
@@ -40,10 +40,24 @@ serve(async (req) => {
     const studentName = booking.profiles?.full_name || "Student";
     const studentEmail = booking.profiles?.email;
     const teacherEmail = teacherProfile?.email;
-    const dateStr = new Date(booking.start_time).toLocaleString("fr-FR", {
-      dateStyle: "full",
-      timeStyle: "short",
-    });
+
+    const studentTz = booking.profiles?.timezone || "Europe/Paris";
+    const teacherTz = teacherProfile?.timezone || "Europe/Paris";
+
+    const fmtDate = (tz: string, locale: string) =>
+      new Date(booking.start_time).toLocaleString(locale, {
+        dateStyle: "full",
+        timeStyle: "short",
+        timeZone: tz,
+      });
+
+    // Primary date string for each recipient
+    const dateStrStudent = fmtDate(studentTz, studentLang === "fr" ? "fr-FR" : "en-US");
+    const dateStrTeacher = fmtDate(teacherTz, "fr-FR");
+    // Secondary (counterpart) date strings
+    const dateStrStudentForTeacher = fmtDate(studentTz, "fr-FR");
+    const dateStrTeacherForStudent = fmtDate(teacherTz, studentLang === "fr" ? "fr-FR" : "en-US");
+
     const price = (booking.price_cents / 100).toFixed(2);
     const confirmUrl = `${SUPABASE_URL}/functions/v1/confirm-booking?token=${booking.confirmation_token}`;
     const rejectUrl = `${SUPABASE_URL}/functions/v1/reject-booking?token=${booking.confirmation_token}`;
@@ -59,7 +73,8 @@ serve(async (req) => {
         html = `
           <h2>Nouvelle demande de réservation</h2>
           <p><strong>Élève :</strong> ${studentName}</p>
-          <p><strong>Date :</strong> ${dateStr}</p>
+          <p><strong>Date (votre heure) :</strong> ${dateStrTeacher}</p>
+          <p style="color:#888;font-size:13px;"><strong>Heure élève :</strong> ${dateStrStudentForTeacher}</p>
           <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
           <p><strong>Prix :</strong> ${price} €</p>
           ${booking.note ? `<p><strong>Note :</strong> ${booking.note}</p>` : ""}
@@ -84,7 +99,8 @@ serve(async (req) => {
             ? `
           <h2>Réservation confirmée</h2>
           <p>Votre cours a été confirmé.</p>
-          <p><strong>Date :</strong> ${dateStr}</p>
+          <p><strong>Date :</strong> ${dateStrStudent}</p>
+          <p style="color:#888;font-size:13px;"><strong>Heure prof :</strong> ${dateStrTeacherForStudent}</p>
           <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
           <p><strong>Prix :</strong> ${price} €</p>
           <p>À bientôt !</p>
@@ -92,7 +108,8 @@ serve(async (req) => {
             : `
           <h2>Booking Confirmed</h2>
           <p>Your session has been confirmed.</p>
-          <p><strong>Date:</strong> ${dateStr}</p>
+          <p><strong>Date:</strong> ${dateStrStudent}</p>
+          <p style="color:#888;font-size:13px;"><strong>Teacher's time:</strong> ${dateStrTeacherForStudent}</p>
           <p><strong>Duration:</strong> ${booking.duration_minutes} min</p>
           <p><strong>Price:</strong> €${price}</p>
           <p>See you soon!</p>
@@ -105,7 +122,8 @@ serve(async (req) => {
         html = `
           <h2>Cours confirmé</h2>
           <p><strong>Élève :</strong> ${studentName}</p>
-          <p><strong>Date :</strong> ${dateStr}</p>
+          <p><strong>Date (votre heure) :</strong> ${dateStrTeacher}</p>
+          <p style="color:#888;font-size:13px;"><strong>Heure élève :</strong> ${dateStrStudentForTeacher}</p>
           <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
           <p><strong>Prix :</strong> ${price} €</p>
         `;
@@ -121,13 +139,13 @@ serve(async (req) => {
           studentLang === "fr"
             ? `
           <h2>Demande non acceptée</h2>
-          <p>Votre demande de cours du ${dateStr} n'a pas été acceptée.</p>
+          <p>Votre demande de cours du ${dateStrStudent} n'a pas été acceptée.</p>
           <p>Votre carte bancaire n'a pas été débitée.</p>
           <p>N'hésitez pas à réserver un autre créneau.</p>
         `
             : `
           <h2>Booking Not Accepted</h2>
-          <p>Your booking request for ${dateStr} was not accepted.</p>
+          <p>Your booking request for ${dateStrStudent} was not accepted.</p>
           <p>Your card was not charged.</p>
           <p>Feel free to book another slot.</p>
         `;
@@ -143,13 +161,13 @@ serve(async (req) => {
           studentLang === "fr"
             ? `
           <h2>Demande expirée</h2>
-          <p>Votre demande de cours du ${dateStr} a expiré car elle n'a pas été traitée à temps.</p>
+          <p>Votre demande de cours du ${dateStrStudent} a expiré car elle n'a pas été traitée à temps.</p>
           <p>Votre carte bancaire n'a pas été débitée.</p>
           <p>N'hésitez pas à réserver un autre créneau.</p>
         `
             : `
           <h2>Booking Expired</h2>
-          <p>Your booking request for ${dateStr} has expired because it was not processed in time.</p>
+          <p>Your booking request for ${dateStrStudent} has expired because it was not processed in time.</p>
           <p>Your card was not charged.</p>
           <p>Feel free to book another slot.</p>
         `;
@@ -173,7 +191,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Jubilate School <noreply@jubilateschool.com>",
+        from: "Jubilate School <noreply@school.jubilate.fr>",
         to: [to],
         subject,
         html,

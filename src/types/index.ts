@@ -8,6 +8,7 @@ export interface Profile {
   full_name: string;
   email: string;
   preferred_lang: "fr" | "en";
+  timezone: string;
   created_at: string;
 }
 
@@ -39,7 +40,7 @@ export interface Booking {
   stripe_payment_intent_id: string | null;
   confirmation_token: string;
   created_at: string;
-  profiles?: { full_name: string; email?: string; id?: string };
+  profiles?: { full_name: string; email?: string; id?: string; timezone?: string };
 }
 
 export interface Pricing {
