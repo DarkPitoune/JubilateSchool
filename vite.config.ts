@@ -9,17 +9,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          mui: ["@mui/material", "@mui/icons-material", "@emotion/react", "@emotion/styled"],
-          fullcalendar: [
-            "@fullcalendar/react",
-            "@fullcalendar/daygrid",
-            "@fullcalendar/timegrid",
-            "@fullcalendar/interaction",
-          ],
-          supabase: ["@supabase/supabase-js"],
-          dateFns: ["date-fns"],
-        },
+        manualChunks: () => "index",
       },
     },
   },
