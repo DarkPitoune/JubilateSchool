@@ -160,8 +160,16 @@ const PlatformLayout = () => {
         </ListItemButton>
       </List>
       <Box sx={{ p: 2, textAlign: "center" }}>
-        <Typography variant="caption" sx={{ color: "#999", fontSize: "0.7rem" }}>
-          {_("footer_dev_credit")}
+        <Typography variant="caption" sx={{ color: "#999", fontSize: "0.7rem", lineHeight: 1.2 }}>
+          Site développé et maintenu par{" "}
+          <a
+            href="https://pierredhebrail.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#666", textDecoration: "underline" }}
+          >
+            Pitoune
+          </a>
         </Typography>
       </Box>
     </Box>
