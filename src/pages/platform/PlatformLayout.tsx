@@ -161,7 +161,7 @@ const PlatformLayout = () => {
       </List>
       <Box sx={{ p: 2, textAlign: "center" }}>
         <Typography variant="caption" sx={{ color: "#999", fontSize: "0.7rem" }}>
-          Site développé et maintenu par Pitoune
+          {_("footer_dev_credit")}
         </Typography>
       </Box>
     </Box>
