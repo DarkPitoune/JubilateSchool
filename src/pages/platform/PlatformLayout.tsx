@@ -163,7 +163,7 @@ const PlatformLayout = () => {
         <Typography variant="caption" sx={{ color: "#999", fontSize: "0.7rem", lineHeight: 1.2 }}>
           Site développé et maintenu par{" "}
           <a
-            href="https://pierredhebrail.com"
+            href="https://pierre.dhebrail.fr"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "#666", textDecoration: "underline" }}
