@@ -159,6 +159,11 @@ const PlatformLayout = () => {
           <ListItemText primary={_("nav_sign_out")} />
         </ListItemButton>
       </List>
+      <Box sx={{ p: 2, textAlign: "center" }}>
+        <Typography variant="caption" sx={{ color: "#999", fontSize: "0.7rem" }}>
+          Site développé et maintenu par Pitoune
+        </Typography>
+      </Box>
     </Box>
   );
 
