@@ -116,6 +116,7 @@
 
     "booking_calendar_title": "Réserver un cours",
     "booking_calendar_instructions": "Les créneaux verts sont disponibles. Cliquez sur un créneau pour réserver.",
+    "booking_charity_disclaimer": "Le bénéfice des cours est entièrement reversé aux Missions Étrangères de Paris (MEP) par lesquelles notre fils Marin est aujourd'hui envoyé en mission au Viêt Nam. Si le montant est trop important pour vous, n'hésitez pas à m'envoyer un message privé.",
     "booking_available": "Disponible",
     "booking_my_confirmed": "Mon cours (confirmé)",
     "booking_my_pending": "Mon cours (en attente)",
@@ -290,6 +291,7 @@
 
     "booking_calendar_title": "Book a session",
     "booking_calendar_instructions": "Green slots are available. Click on a slot to book.",
+    "booking_charity_disclaimer": "All proceeds from the lessons are donated to the Paris Foreign Missions (MEP) through which our son Marin is currently serving in Vietnam. If the amount is too high for you, please don't hesitate to send me a private message.",
     "booking_available": "Available",
     "booking_my_confirmed": "My session (confirmed)",
     "booking_my_pending": "My session (pending)",

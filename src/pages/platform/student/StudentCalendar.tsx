@@ -97,6 +97,20 @@ const StudentCalendar = () => {
         {_("booking_calendar_instructions")}
       </Typography>
 
+      <Box
+        sx={{
+          mb: 3,
+          p: 2,
+          bgcolor: "#f9f9f9",
+          borderLeft: "3px solid #4caf50",
+          borderRadius: 1,
+        }}
+      >
+        <Typography variant="body2" sx={{ color: "#555", fontSize: "0.875rem", lineHeight: 1.6 }}>
+          💚 {_("booking_charity_disclaimer")}
+        </Typography>
+      </Box>
+
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
