@@ -74,7 +74,6 @@
     "nav_calendar": "Calendrier",
     "nav_home": "Accueil",
     "nav_sign_out": "Déconnexion",
-    "footer_dev_credit": "Site développé et maintenu par Pitoune",
 
     "dashboard_title": "Tableau de bord",
     "dashboard_upcoming": "Cours à venir (7j)",
@@ -250,7 +249,6 @@
     "nav_calendar": "Calendar",
     "nav_home": "Home",
     "nav_sign_out": "Sign out",
-    "footer_dev_credit": "Website developed and maintained by Pitoune",
 
     "dashboard_title": "Dashboard",
     "dashboard_upcoming": "Upcoming (7 days)",

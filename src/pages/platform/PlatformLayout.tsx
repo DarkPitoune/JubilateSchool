@@ -50,7 +50,7 @@ const PlatformLayout = () => {
   // Fetch counterpart timezone
   const [counterpartTz, setCounterpartTz] = useState<string | null>(null);
   useEffect(() => {
-    if (!profile || isAdmin && !isImpersonating) return;
+    if (!profile || (isAdmin && !isImpersonating)) return;
     if (isTeacher) {
       setCounterpartTz("Europe/Paris");
     } else {
@@ -99,7 +99,9 @@ const PlatformLayout = () => {
   ];
 
   const navLinks = isImpersonating
-    ? (isTeacher ? teacherLinks : studentLinks)
+    ? isTeacher
+      ? teacherLinks
+      : studentLinks
     : isAdmin
       ? adminLinks
       : isTeacher
@@ -159,8 +161,11 @@ const PlatformLayout = () => {
           <ListItemText primary={_("nav_sign_out")} />
         </ListItemButton>
       </List>
-      <Box sx={{ p: 2, textAlign: "center" }}>
-        <Typography variant="caption" sx={{ color: "#999", fontSize: "0.7rem", lineHeight: 1.2 }}>
+      <Box sx={{ p: 1, textAlign: "center" }}>
+        <Typography
+          variant="caption"
+          sx={{ color: "#999", fontSize: "0.7rem", lineHeight: 1.2 }}
+        >
           Site développé et maintenu par{" "}
           <a
             href="https://pierre.dhebrail.fr"
@@ -262,13 +267,19 @@ const PlatformLayout = () => {
             }}
           >
             <Typography variant="body2">
-              {_("admin_viewing_as")} <strong>{profile?.full_name}</strong> ({profile?.role})
+              {_("admin_viewing_as")} <strong>{profile?.full_name}</strong> (
+              {profile?.role})
             </Typography>
             <Chip
               label={_("admin_stop_impersonation")}
               size="small"
               onClick={handleStopImpersonating}
-              sx={{ bgcolor: "white", color: "#ed6c02", fontWeight: 600, cursor: "pointer" }}
+              sx={{
+                bgcolor: "white",
+                color: "#ed6c02",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
             />
           </Box>
         )}
