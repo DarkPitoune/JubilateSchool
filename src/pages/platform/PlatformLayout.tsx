@@ -29,6 +29,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useTranslator } from "../../components";
 import CounterpartClock from "../../components/CounterpartClock";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
+import { useBookingsRealtime } from "../../hooks/useBookingsRealtime";
 import { supabase } from "../../lib/supabase";
 
 const DRAWER_WIDTH = 240;
@@ -46,6 +47,7 @@ const PlatformLayout = () => {
   const isImpersonating = isAdmin && profile !== realProfile;
   const isTeacher = profile?.role === "teacher";
   usePushSubscription(isAdmin ? undefined : profile?.id);
+  useBookingsRealtime();
 
   // Fetch counterpart timezone
   const [counterpartTz, setCounterpartTz] = useState<string | null>(null);
