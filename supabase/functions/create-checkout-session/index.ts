@@ -25,25 +25,18 @@ serve(async (req) => {
       });
     }
 
-    const {
-      availability_range_id,
-      start_time,
-      end_time,
-      duration_minutes,
-      note,
-      site_url,
-    } = await req.json();
+    const { slot_id, note, site_url } = await req.json();
 
-    // Validate the availability range exists
-    const { data: range } = await supabaseAdmin
-      .from("availability_ranges")
-      .select("*")
-      .eq("id", availability_range_id)
+    // Validate the slot exists
+    const { data: slot } = await supabaseAdmin
+      .from("availability_slots")
+      .select("*, profiles!availability_slots_teacher_id_fkey(id, timezone)")
+      .eq("id", slot_id)
       .single();
 
-    if (!range) {
+    if (!slot) {
       return new Response(
-        JSON.stringify({ error: "Availability range not found" }),
+        JSON.stringify({ error: "Availability slot not found" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -51,38 +44,9 @@ serve(async (req) => {
       );
     }
 
-    // Check booking is within the range
-    if (
-      new Date(start_time) < new Date(range.start_time) ||
-      new Date(end_time) > new Date(range.end_time)
-    ) {
-      return new Response(
-        JSON.stringify({ error: "Booking outside availability range" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Check for overlapping bookings
-    const { data: overlapping } = await supabaseAdmin
-      .from("bookings")
-      .select("id")
-      .eq("availability_range_id", availability_range_id)
-      .in("status", ["pending_confirmation", "confirmed"])
-      .lt("start_time", end_time)
-      .gt("end_time", start_time);
-
-    if (overlapping && overlapping.length > 0) {
-      return new Response(
-        JSON.stringify({ error: "Time slot is no longer available" }),
-        {
-          status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    // Derive start/end times (slot is always 1 hour)
+    const start_time = slot.start_time;
+    const end_time = new Date(new Date(start_time).getTime() + 60 * 60 * 1000).toISOString();
 
     // Get student profile (for custom rate, email, timezone)
     const { data: studentProfile } = await supabaseAdmin
@@ -111,17 +75,17 @@ serve(async (req) => {
 
     const hourlyRateCents =
       studentProfile?.custom_hourly_rate_cents ?? pricing.hourly_rate_cents;
-    const price_cents = Math.round((duration_minutes / 60) * hourlyRateCents);
+    // Always 1 hour
+    const price_cents = hourlyRateCents;
 
     // Insert booking as pending
     const { data: booking, error: insertError } = await supabaseAdmin
       .from("bookings")
       .insert({
-        availability_range_id,
+        availability_slot_id: slot_id,
         student_id: user.id,
         start_time,
         end_time,
-        duration_minutes,
         note: note || "",
         price_cents,
         status: "pending_confirmation",
@@ -134,7 +98,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           error:
-            insertError.code === "23P01"
+            insertError.code === "23505"
               ? "Time slot is no longer available"
               : "Failed to create booking",
         }),
@@ -171,7 +135,7 @@ serve(async (req) => {
             currency: pricing.currency,
             unit_amount: price_cents,
             product_data: {
-              name: `Jubilate School — ${duration_minutes} min`,
+              name: `Jubilate School — 1h`,
               description: `Session on ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: studentProfile?.timezone || "Europe/Paris" }).format(new Date(start_time))}`,
             },
           },

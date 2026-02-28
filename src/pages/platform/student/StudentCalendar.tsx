@@ -12,13 +12,11 @@ import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
 import BookingDialog from "./BookingDialog";
 import {
-  useAvailabilityRangesForStudents,
-  useBookingsByRanges,
+  useAvailableSlots,
   usePricing,
   useMyBookings,
-  computeFreeWindows,
 } from "../../../hooks/useQueries";
-import type { FreeWindow } from "../../../types";
+import type { AvailabilitySlot } from "../../../types";
 
 const StudentCalendar = () => {
   const _ = useTranslator();
@@ -28,15 +26,13 @@ const StudentCalendar = () => {
   const bigScreen = useMediaQuery(theme.breakpoints.up("sm"));
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedWindow, setSelectedWindow] = useState<FreeWindow | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
 
-  const { data: ranges = [], isLoading: rangesLoading } = useAvailabilityRangesForStudents();
-  const rangeIds = useMemo(() => ranges.map((r) => r.id), [ranges]);
-  const { data: rangeBookings = [], isLoading: bookingsLoading } = useBookingsByRanges(rangeIds);
+  const { data: availableSlots = [], isLoading: slotsLoading } = useAvailableSlots();
   const { data: pricing, isLoading: pricingLoading } = usePricing();
   const { data: myBookings = [] } = useMyBookings(profile?.id);
 
-  const loading = rangesLoading || bookingsLoading || pricingLoading;
+  const loading = slotsLoading || pricingLoading;
 
   const effectivePricing = useMemo(() => {
     if (!pricing) return null;
@@ -45,38 +41,34 @@ const StudentCalendar = () => {
     return { ...pricing, hourly_rate_cents: custom };
   }, [pricing, profile?.custom_hourly_rate_cents]);
 
-  const freeWindows = useMemo(
-    () => computeFreeWindows(ranges, rangeBookings),
-    [ranges, rangeBookings]
-  );
-
   const handleEventClick = (clickInfo: EventClickArg) => {
     const props = clickInfo.event.extendedProps;
-    if (props.type !== "free") return;
+    if (props.type !== "available") return;
 
-    setSelectedWindow({
-      rangeId: props.rangeId,
-      start: clickInfo.event.start!.toISOString(),
-      end: clickInfo.event.end!.toISOString(),
-    });
-    setDialogOpen(true);
+    const slot = availableSlots.find((s) => s.id === props.slotId);
+    if (slot) {
+      setSelectedSlot(slot);
+      setDialogOpen(true);
+    }
   };
 
   const handleBooked = () => {
-    queryClient.invalidateQueries({ queryKey: ["availability-ranges"] });
-    queryClient.invalidateQueries({ queryKey: ["bookings", "by-ranges"] });
+    queryClient.invalidateQueries({ queryKey: ["availability-slots"] });
     queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
   };
 
+  const slotEnd = (startIso: string) =>
+    new Date(new Date(startIso).getTime() + 60 * 60 * 1000).toISOString();
+
   const calendarEvents = [
-    ...freeWindows.map((w, i) => ({
-      id: `free-${i}`,
+    ...availableSlots.map((s) => ({
+      id: `slot-${s.id}`,
       title: _("booking_available"),
-      start: w.start,
-      end: w.end,
+      start: s.start_time,
+      end: slotEnd(s.start_time),
       backgroundColor: "#4caf50",
       borderColor: "#388e3c",
-      extendedProps: { type: "free", rangeId: w.rangeId },
+      extendedProps: { type: "available", slotId: s.id },
     })),
     ...myBookings.map((b) => ({
       id: `my-${b.id}`,
@@ -123,51 +115,51 @@ const StudentCalendar = () => {
           <CircularProgress />
         </Box>
       ) : (
-      <>
-      <Box
-        sx={{
-          bgcolor: "white",
-          borderRadius: 1,
-          p: { xs: 1, sm: 2 },
-          overflowX: "auto",
-          "& .fc": { fontFamily: "inherit" },
-          "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 },
-        }}
-      >
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView={bigScreen ? "timeGridWeek" : "timeGridDay"}
-          headerToolbar={
-            bigScreen
-              ? { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }
-              : { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek" }
-          }
-          locales={[frLocale]}
-          locale={lang === "fr" ? "fr" : "en"}
-          eventClick={handleEventClick}
-          events={calendarEvents}
-          slotMinTime="07:00:00"
-          slotMaxTime="22:00:00"
-          allDaySlot={false}
-          height="auto"
-          nowIndicator
-          slotDuration="00:15:00"
-        />
-      </Box>
+        <>
+          <Box
+            sx={{
+              bgcolor: "white",
+              borderRadius: 1,
+              p: { xs: 1, sm: 2 },
+              overflowX: "auto",
+              "& .fc": { fontFamily: "inherit" },
+              "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 },
+            }}
+          >
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView={bigScreen ? "timeGridWeek" : "timeGridDay"}
+              headerToolbar={
+                bigScreen
+                  ? { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }
+                  : { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek" }
+              }
+              locales={[frLocale]}
+              locale={lang === "fr" ? "fr" : "en"}
+              eventClick={handleEventClick}
+              events={calendarEvents}
+              slotMinTime="07:00:00"
+              slotMaxTime="22:00:00"
+              allDaySlot={false}
+              height="auto"
+              nowIndicator
+              slotDuration="01:00:00"
+            />
+          </Box>
 
-      {selectedWindow && effectivePricing && (
-        <BookingDialog
-          open={dialogOpen}
-          onClose={() => {
-            setDialogOpen(false);
-            setSelectedWindow(null);
-          }}
-          window={selectedWindow}
-          pricing={effectivePricing}
-          onBooked={handleBooked}
-        />
-      )}
-      </>
+          {selectedSlot && effectivePricing && (
+            <BookingDialog
+              open={dialogOpen}
+              onClose={() => {
+                setDialogOpen(false);
+                setSelectedSlot(null);
+              }}
+              slot={selectedSlot}
+              pricing={effectivePricing}
+              onBooked={handleBooked}
+            />
+          )}
+        </>
       )}
     </Box>
   );

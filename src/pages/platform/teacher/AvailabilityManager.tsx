@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   Alert,
   CircularProgress,
   useTheme,
@@ -17,161 +16,148 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import type { DateSelectArg, EventClickArg } from "@fullcalendar/core";
+import type { EventClickArg } from "@fullcalendar/core";
 import frLocale from "@fullcalendar/core/locales/fr";
+import { format } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
 import { useTeacherAvailability } from "../../../hooks/useQueries";
-import type { AvailabilityRange } from "../../../types";
+import type { AvailabilitySlot } from "../../../types";
 
 const AvailabilityManager = () => {
   const _ = useTranslator();
   const lang = useLang();
+  const locale = lang === "en" ? enUS : fr;
   const { profile } = useAuth();
   const theme = useTheme();
   const bigScreen = useMediaQuery(theme.breakpoints.up("sm"));
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingRange, setEditingRange] = useState<AvailabilityRange | null>(null);
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [error, setError] = useState("");
 
-  const { data, isLoading: loading } = useTeacherAvailability(profile?.id);
-  const ranges = data?.ranges ?? [];
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
+  const [pendingSlotTime, setPendingSlotTime] = useState<Date | null>(null);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data, isLoading } = useTeacherAvailability(profile?.id);
+  const slots = data?.slots ?? [];
   const bookings = data?.bookings ?? [];
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["availability-ranges"] });
+    queryClient.invalidateQueries({ queryKey: ["availability-slots"] });
   };
 
-  const toLocalDatetime = (date: Date | string) => {
+  // Floor a date to the whole hour
+  const floorToHour = (date: Date): Date => {
     const d = new Date(date);
-    const offset = d.getTimezoneOffset();
-    const local = new Date(d.getTime() - offset * 60000);
-    return local.toISOString().slice(0, 16);
+    d.setMinutes(0, 0, 0);
+    return d;
   };
 
-  const handleSelect = (selectInfo: DateSelectArg) => {
-    setEditingRange(null);
-    setStartTime(toLocalDatetime(selectInfo.start));
-    setEndTime(toLocalDatetime(selectInfo.end));
+  const handleDateClick = ({ date }: { date: Date }) => {
+    const slotTime = floorToHour(date);
+    // If a slot already exists at this time, open remove dialog
+    const existing = slots.find((s) => new Date(s.start_time).getTime() === slotTime.getTime());
+    if (existing) {
+      setSelectedSlot(existing);
+      setPendingSlotTime(null);
+    } else {
+      setSelectedSlot(null);
+      setPendingSlotTime(slotTime);
+    }
     setError("");
     setDialogOpen(true);
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
-    const event = clickInfo.event;
-    if (event.extendedProps.type === "booking") return;
+    const props = clickInfo.event.extendedProps;
+    if (props.type === "booking") return;
 
-    const range = ranges.find((r) => r.id === event.id);
-    if (!range) return;
+    const slot = slots.find((s) => s.id === clickInfo.event.id);
+    if (!slot) return;
 
-    setEditingRange(range);
-    setStartTime(toLocalDatetime(range.start_time));
-    setEndTime(toLocalDatetime(range.end_time));
+    setSelectedSlot(slot);
+    setPendingSlotTime(null);
     setError("");
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleAdd = async () => {
+    if (!pendingSlotTime) return;
     setError("");
-    const start = new Date(startTime).toISOString();
-    const end = new Date(endTime).toISOString();
+    setSaving(true);
 
-    if (new Date(end) <= new Date(start)) {
-      setError(_("avail_error_invalid_range"));
+    const { error: insertError } = await supabase
+      .from("availability_slots")
+      .insert({ teacher_id: profile!.id, start_time: pendingSlotTime.toISOString() });
+
+    setSaving(false);
+    if (insertError) {
+      setError(_("avail_error_save"));
       return;
     }
-
-    if (editingRange) {
-      const conflicting = bookings.filter(
-        (b) =>
-          b.availability_range_id === editingRange.id &&
-          b.status === "confirmed" &&
-          (new Date(b.start_time) < new Date(start) || new Date(b.end_time) > new Date(end))
-      );
-      if (conflicting.length > 0) {
-        setError(_("avail_error_has_bookings"));
-        return;
-      }
-
-      const { error } = await supabase
-        .from("availability_ranges")
-        .update({ start_time: start, end_time: end })
-        .eq("id", editingRange.id);
-
-      if (error) {
-        setError(_("avail_error_save"));
-        return;
-      }
-    } else {
-      const { error } = await supabase
-        .from("availability_ranges")
-        .insert({
-          teacher_id: profile!.id,
-          start_time: start,
-          end_time: end,
-        });
-
-      if (error) {
-        setError(_("avail_error_save"));
-        return;
-      }
-    }
-
     setDialogOpen(false);
     invalidate();
   };
 
-  const handleDelete = async () => {
-    if (!editingRange) return;
+  const handleRemove = async () => {
+    if (!selectedSlot) return;
 
-    const confirmedBookings = bookings.filter(
-      (b) => b.availability_range_id === editingRange.id && b.status === "confirmed"
-    );
-    if (confirmedBookings.length > 0) {
+    const hasActiveBooking = bookings.some((b) => b.availability_slot_id === selectedSlot.id);
+    if (hasActiveBooking) {
       setError(_("avail_error_delete_has_bookings"));
       return;
     }
 
-    const { error } = await supabase
-      .from("availability_ranges")
-      .delete()
-      .eq("id", editingRange.id);
+    setError("");
+    setSaving(true);
 
-    if (error) {
+    const { error: deleteError } = await supabase
+      .from("availability_slots")
+      .delete()
+      .eq("id", selectedSlot.id);
+
+    setSaving(false);
+    if (deleteError) {
       setError(_("avail_error_delete"));
       return;
     }
-
     setDialogOpen(false);
     invalidate();
   };
 
-  const calendarEvents = [
-    ...ranges.map((r) => ({
-      id: r.id,
-      title: _("avail_available"),
-      start: r.start_time,
-      end: r.end_time,
-      backgroundColor: "#4caf50",
-      borderColor: "#388e3c",
-      extendedProps: { type: "availability" },
-    })),
-    ...bookings.map((b) => ({
-      id: `booking-${b.id}`,
-      title: `${b.profiles?.full_name || _("avail_booking")} (${b.duration_minutes}min)`,
-      start: b.start_time,
-      end: b.end_time,
-      backgroundColor: b.status === "confirmed" ? "#1976d2" : "#ed6c02",
-      borderColor: b.status === "confirmed" ? "#1565c0" : "#e65100",
-      extendedProps: { type: "booking", status: b.status },
-    })),
-  ];
+  const slotEnd = (startIso: string) =>
+    new Date(new Date(startIso).getTime() + 60 * 60 * 1000).toISOString();
+
+  const calendarEvents = slots.map((s) => {
+    const booking = bookings.find((b) => b.availability_slot_id === s.id);
+    const isBooked = !!booking;
+    return {
+      id: s.id,
+      title: isBooked
+        ? booking!.profiles?.full_name || _("avail_booking")
+        : _("avail_available"),
+      start: s.start_time,
+      end: slotEnd(s.start_time),
+      backgroundColor: isBooked
+        ? booking!.status === "confirmed"
+          ? "#1976d2"
+          : "#ed6c02"
+        : "#4caf50",
+      borderColor: isBooked
+        ? booking!.status === "confirmed"
+          ? "#1565c0"
+          : "#e65100"
+        : "#388e3c",
+      extendedProps: { type: isBooked ? "booking" : "availability" },
+    };
+  });
+
+  const dialogSlotTime = selectedSlot ? new Date(selectedSlot.start_time) : pendingSlotTime;
 
   return (
     <Box>
@@ -182,80 +168,77 @@ const AvailabilityManager = () => {
         {_("avail_instructions")}
       </Typography>
 
-      {loading ? (
+      {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
         </Box>
       ) : (
-      <>
-      <Box sx={{ bgcolor: "white", borderRadius: 1, p: { xs: 1, sm: 2 }, overflowX: "auto", "& .fc": { fontFamily: "inherit" }, "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 } }}>
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView={bigScreen ? "timeGridWeek" : "timeGridDay"}
-          headerToolbar={
-            bigScreen
-              ? { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }
-              : { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek" }
-          }
-          locales={[frLocale]}
-          locale={lang === "fr" ? "fr" : "en"}
-          selectable
-          selectMirror
-          select={handleSelect}
-          eventClick={handleEventClick}
-          events={calendarEvents}
-          slotMinTime="07:00:00"
-          slotMaxTime="22:00:00"
-          allDaySlot={false}
-          height="auto"
-          nowIndicator
-          slotDuration="00:15:00"
-          snapDuration="00:15:00"
-        />
-      </Box>
+        <>
+          <Box
+            sx={{
+              bgcolor: "white",
+              borderRadius: 1,
+              p: { xs: 1, sm: 2 },
+              overflowX: "auto",
+              "& .fc": { fontFamily: "inherit" },
+              "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 },
+            }}
+          >
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView={bigScreen ? "timeGridWeek" : "timeGridDay"}
+              headerToolbar={
+                bigScreen
+                  ? { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }
+                  : { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek" }
+              }
+              locales={[frLocale]}
+              locale={lang === "fr" ? "fr" : "en"}
+              dateClick={handleDateClick}
+              eventClick={handleEventClick}
+              events={calendarEvents}
+              slotMinTime="07:00:00"
+              slotMaxTime="22:00:00"
+              allDaySlot={false}
+              height="auto"
+              nowIndicator
+              slotDuration="01:00:00"
+              snapDuration="01:00:00"
+            />
+          </Box>
 
-      {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          {editingRange ? _("avail_edit_title") : _("avail_create_title")}
-        </DialogTitle>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <TextField
-            label={_("avail_start")}
-            type="datetime-local"
-            fullWidth
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            label={_("avail_end")}
-            type="datetime-local"
-            fullWidth
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-          />
-        </DialogContent>
-        <DialogActions>
-          {editingRange && (
-            <Button onClick={handleDelete} color="error" sx={{ mr: "auto" }}>
-              {_("avail_delete")}
-            </Button>
-          )}
-          <Button onClick={() => setDialogOpen(false)}>{_("cancel")}</Button>
-          <Button onClick={handleSave} variant="contained">
-            {_("save")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      </>
+          <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="xs" fullWidth>
+            <DialogTitle>
+              {selectedSlot ? _("avail_remove_title") : _("avail_add_title")}
+            </DialogTitle>
+            <DialogContent>
+              {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {error}
+                </Alert>
+              )}
+              {dialogSlotTime && (
+                <Typography sx={{ mt: 1 }}>
+                  {format(dialogSlotTime, "PPPp", { locale })}
+                  {" — "}
+                  {format(new Date(dialogSlotTime.getTime() + 60 * 60 * 1000), "p", { locale })}
+                </Typography>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setDialogOpen(false)}>{_("cancel")}</Button>
+              {selectedSlot ? (
+                <Button onClick={handleRemove} color="error" variant="contained" disabled={saving}>
+                  {saving ? _("loading") : _("avail_delete")}
+                </Button>
+              ) : (
+                <Button onClick={handleAdd} variant="contained" disabled={saving}>
+                  {saving ? _("loading") : _("avail_add_confirm")}
+                </Button>
+              )}
+            </DialogActions>
+          </Dialog>
+        </>
       )}
     </Box>
   );

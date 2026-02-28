@@ -153,7 +153,6 @@ const BookingsList = () => {
                   <Typography variant="body2" color="text.secondary">
                     {format(new Date(b.start_time), "p", { locale })} —{" "}
                     {format(new Date(b.end_time), "p", { locale })}
-                    {" · "}{b.duration_minutes} min
                   </Typography>
                   {counterpartTz && (
                     <Typography variant="caption" sx={{ color: "#999" }}>
@@ -247,9 +246,6 @@ const BookingsList = () => {
                 <TableRow sx={{ bgcolor: "#030340" }}>
                   <TableCell sx={{ color: "white", whiteSpace: "nowrap" }}>{_("bookings_date")}</TableCell>
                   <TableCell sx={{ color: "white", whiteSpace: "nowrap" }}>{_("bookings_time")}</TableCell>
-                  <TableCell sx={{ color: "white" }} align="center">
-                    {_("bookings_duration_col")}
-                  </TableCell>
                   {isTeacher && (
                     <TableCell sx={{ color: "white" }}>{_("bookings_student")}</TableCell>
                   )}
@@ -286,7 +282,6 @@ const BookingsList = () => {
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell align="center">{b.duration_minutes} min</TableCell>
                     {isTeacher && (
                       <TableCell>{b.profiles?.full_name || "—"}</TableCell>
                     )}

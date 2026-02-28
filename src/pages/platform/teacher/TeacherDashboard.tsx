@@ -115,7 +115,7 @@ const TeacherDashboard = () => {
                     {booking.profiles?.full_name}
                   </Typography>
                   <Typography variant="body2" sx={{ color: "#666" }} noWrap>
-                    {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
+                    {format(new Date(booking.start_time), "PPPp", { locale })} — 1h
                   </Typography>
                   {booking.profiles?.timezone && (
                     <Typography variant="caption" sx={{ color: "#999" }}>
@@ -154,7 +154,7 @@ const TeacherDashboard = () => {
                       {booking.profiles?.full_name}
                     </Typography>
                     <Typography variant="body2" sx={{ color: "#666" }} noWrap>
-                      {format(new Date(booking.start_time), "PPPp", { locale })} — {booking.duration_minutes} min
+                      {format(new Date(booking.start_time), "PPPp", { locale })} — 1h
                     </Typography>
                     {booking.profiles?.timezone && (
                       <Typography variant="caption" sx={{ color: "#999" }}>

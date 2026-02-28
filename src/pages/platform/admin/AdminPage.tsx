@@ -151,7 +151,7 @@ const AdminPage = () => {
                     <TableCell>
                       {format(new Date(booking.start_time), "PPp", { locale })}
                     </TableCell>
-                    <TableCell>{booking.duration_minutes} min</TableCell>
+                    <TableCell>1h</TableCell>
                     <TableCell>{(booking.price_cents / 100).toFixed(2)}€</TableCell>
                     <TableCell>
                       <Chip

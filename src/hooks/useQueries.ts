@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import type { Booking, AvailabilityRange, Pricing, FreeWindow, Profile } from "../types";
+import type { Booking, AvailabilitySlot, Pricing, Profile } from "../types";
 
 // ── Bookings list (teacher sees all, student sees own) ──
 
@@ -63,33 +63,34 @@ export function useCancelBooking() {
 
 // ── Student calendar data ──
 
-export function useAvailabilityRangesForStudents() {
+export function useAvailableSlots() {
   return useQuery({
-    queryKey: ["availability-ranges"],
+    queryKey: ["availability-slots", "available"],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { data } = await supabase
-        .from("availability_ranges")
-        .select("*")
-        .gte("end_time", now)
-        .order("start_time", { ascending: true });
-      return (data || []) as AvailabilityRange[];
-    },
-  });
-}
 
-export function useBookingsByRanges(rangeIds: string[]) {
-  return useQuery({
-    queryKey: ["bookings", "by-ranges", rangeIds],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("bookings")
+      // Get future slots
+      const { data: slotsData } = await supabase
+        .from("availability_slots")
         .select("*")
-        .in("availability_range_id", rangeIds)
+        .gte("start_time", now)
+        .order("start_time", { ascending: true });
+
+      const slots = (slotsData || []) as AvailabilitySlot[];
+      if (slots.length === 0) return [];
+
+      // Get slot IDs that have an active booking
+      const slotIds = slots.map((s) => s.id);
+      const { data: bookedData } = await supabase
+        .from("bookings")
+        .select("availability_slot_id")
+        .in("availability_slot_id", slotIds)
         .in("status", ["pending_confirmation", "confirmed"]);
-      return (data || []) as Booking[];
+
+      const bookedSlotIds = new Set((bookedData || []).map((b) => b.availability_slot_id));
+
+      return slots.filter((s) => !bookedSlotIds.has(s.id));
     },
-    enabled: rangeIds.length > 0,
   });
 }
 
@@ -123,48 +124,6 @@ export function useMyBookings(userId: string | undefined) {
     },
     enabled: !!userId,
   });
-}
-
-export function computeFreeWindows(ranges: AvailabilityRange[], bookings: Booking[]): FreeWindow[] {
-  const free: FreeWindow[] = [];
-  for (const range of ranges) {
-    const rangeStart = new Date(range.start_time).getTime();
-    const rangeEnd = new Date(range.end_time).getTime();
-
-    const rangeBookings = bookings
-      .filter((b) => b.availability_range_id === range.id)
-      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
-    let cursor = rangeStart;
-    for (const booking of rangeBookings) {
-      const bStart = new Date(booking.start_time).getTime();
-      const bEnd = new Date(booking.end_time).getTime();
-
-      if (cursor < bStart) {
-        const gapStart = Math.max(cursor, Date.now());
-        if (gapStart < bStart) {
-          free.push({
-            rangeId: range.id,
-            start: new Date(gapStart).toISOString(),
-            end: new Date(bStart).toISOString(),
-          });
-        }
-      }
-      cursor = Math.max(cursor, bEnd);
-    }
-
-    if (cursor < rangeEnd) {
-      const gapStart = Math.max(cursor, Date.now());
-      if (gapStart < rangeEnd) {
-        free.push({
-          rangeId: range.id,
-          start: new Date(gapStart).toISOString(),
-          end: new Date(rangeEnd).toISOString(),
-        });
-      }
-    }
-  }
-  return free;
 }
 
 // ── Teacher dashboard ──
@@ -210,28 +169,28 @@ export function useDashboard() {
 
 export function useTeacherAvailability(teacherId: string | undefined) {
   return useQuery({
-    queryKey: ["availability-ranges", "teacher", teacherId],
+    queryKey: ["availability-slots", "teacher", teacherId],
     queryFn: async () => {
-      const { data: rangesData } = await supabase
-        .from("availability_ranges")
+      const { data: slotsData } = await supabase
+        .from("availability_slots")
         .select("*")
         .eq("teacher_id", teacherId!)
         .order("start_time", { ascending: true });
 
-      const ranges = (rangesData || []) as AvailabilityRange[];
+      const slots = (slotsData || []) as AvailabilitySlot[];
 
       let bookings: Booking[] = [];
-      if (ranges.length > 0) {
-        const rangeIds = ranges.map((r) => r.id);
+      if (slots.length > 0) {
+        const slotIds = slots.map((s) => s.id);
         const { data: bookingsData } = await supabase
           .from("bookings")
           .select("*, profiles!bookings_student_id_fkey(full_name, timezone)")
-          .in("availability_range_id", rangeIds)
+          .in("availability_slot_id", slotIds)
           .in("status", ["pending_confirmation", "confirmed"]);
         bookings = (bookingsData || []) as Booking[];
       }
 
-      return { ranges, bookings };
+      return { slots, bookings };
     },
     enabled: !!teacherId,
   });
@@ -314,7 +273,11 @@ export function useStudentList() {
         s.bookings.push(booking);
         if (booking.status === "confirmed") {
           s.totalConfirmed++;
-          s.totalMinutes += booking.duration_minutes;
+          // Derive duration from start/end times (always 60 min for new bookings)
+          const durationMin = Math.round(
+            (new Date(booking.end_time).getTime() - new Date(booking.start_time).getTime()) / 60000
+          );
+          s.totalMinutes += durationMin;
         }
       }
 

@@ -21,6 +21,13 @@ export interface AvailabilityRange {
   created_at: string;
 }
 
+export interface AvailabilitySlot {
+  id: string;
+  teacher_id: string;
+  start_time: string; // end_time = start_time + 1h (always)
+  created_at: string;
+}
+
 export type BookingStatus =
   | "pending_confirmation"
   | "confirmed"
@@ -32,11 +39,11 @@ export type BookingStatus =
 
 export interface Booking {
   id: string;
-  availability_range_id: string;
+  availability_range_id: string | null;
+  availability_slot_id: string | null;
   student_id: string;
   start_time: string;
   end_time: string;
-  duration_minutes: number;
   note: string;
   price_cents: number;
   status: BookingStatus;
@@ -52,12 +59,6 @@ export interface Pricing {
   hourly_rate_cents: number;
   currency: string;
   effective_from: string;
-}
-
-export interface FreeWindow {
-  rangeId: string;
-  start: string;
-  end: string;
 }
 
 // Auth context
