@@ -5,7 +5,7 @@ import { useTranslator, Card } from "../components";
 const WhoAmI = forwardRef<HTMLElement, { id: string }>((props, ref) => {
   const _ = useTranslator();
   return (
-    <section id={props.id} ref={ref} className="scroll-child">
+    <section id={props.id} ref={ref}>
       <Typography
         variant="h3"
         sx={{ textTransform: "uppercase", fontSize: "2.5rem" }}

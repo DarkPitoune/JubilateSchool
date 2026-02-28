@@ -6,6 +6,5 @@ export {
   useTranslator,
   LangSwitch,
 } from "./translator";
-export { default as useResize } from "./useResize";
 export { default as ProtectedRoute } from "./ProtectedRoute";
 export { default as RoleGate } from "./RoleGate";

@@ -22,14 +22,12 @@ const Testimony = ({ name, image, text, status }: TestimonyProps) => {
   const imgSrc = image || "/profile-placeholder.png";
   return (
     <Card
-      className="scroll-child"
       sx={{
-        minWidth: "min(80%, 28em)",
+        width: "min(85vw, 28em)",
         flexShrink: 0,
-        margin: "auto 0.5em",
+        margin: "auto 3em",
         borderRadius: "1em",
         padding: bigScreen ? "1em" : "0.7em",
-        display: "inline",
         scrollSnapAlign: "center",
         height: "fit-content",
       }}
@@ -66,7 +64,7 @@ const Testimony = ({ name, image, text, status }: TestimonyProps) => {
 const Witnesses = forwardRef<HTMLElement, { id: string }>((props, ref) => {
   const _ = useTranslator();
   return (
-    <section id={props.id} ref={ref} className="scroll-child">
+    <section id={props.id} ref={ref}>
       <Typography
         variant="h3"
         mt={3}

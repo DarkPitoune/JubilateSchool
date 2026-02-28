@@ -36,7 +36,7 @@ const Welcome = ({ refs }: WelcomeProps) => {
   return (
     <Box
       sx={{
-        height: "100vh",
+        height: "100dvh",
         background:
           "-webkit-linear-gradient(top, rgba(120, 141, 171, .2) 64%, rgb(120, 141, 171) 98%)",
         position: "relative",
@@ -81,7 +81,7 @@ const Welcome = ({ refs }: WelcomeProps) => {
         src="/welcome.jpg"
         alt="welcome"
         style={{
-          height: "100vh",
+          height: "100dvh",
           width: "100vw",
           opacity: ".3",
           position: "absolute",
@@ -96,7 +96,7 @@ const Welcome = ({ refs }: WelcomeProps) => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "space-evenly",
-          height: "100vh",
+          height: "100dvh",
           textAlign: "center",
           marginX: { xs: "1em", sm: "2em" },
           paddingTop: "3.5em",

@@ -15,13 +15,13 @@ const ContactCost = forwardRef<HTMLElement, { id: string }>((props, ref) => {
   const theme = useTheme();
   const bigScreen = useMediaQuery(theme.breakpoints.up("sm"));
   return (
-    <section ref={ref} className="scroll-child" id={props.id}>
+    <section ref={ref} id={props.id}>
       <Box
         sx={{
-          height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-evenly",
+          gap: 3,
+          py: 2,
         }}
       >
         <div>
