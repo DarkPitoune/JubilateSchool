@@ -23,8 +23,16 @@ import {
   Snackbar,
   useMediaQuery,
   useTheme,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  TextField,
+  InputAdornment,
+  IconButton,
   type ChipProps,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -43,6 +51,58 @@ const statusColors: Record<BookingStatus, ChipProps["color"]> = {
   payment_failed: "error",
   cancelled_by_student: "default",
   cancelled_by_teacher: "default",
+};
+
+const CalendarFeedSection = ({ token }: { token: string }) => {
+  const _ = useTranslator();
+  const [copied, setCopied] = useState(false);
+
+  const feedUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?token=${token}`;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(feedUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Accordion
+      disableGutters
+      sx={{ mt: 4, "&::before": { display: "none" }, boxShadow: "none", border: "1px solid", borderColor: "divider", borderRadius: "8px !important" }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography variant="subtitle2" sx={{ color: "#030340" }}>
+          {_("cal_feed_title")}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Typography variant="body2" sx={{ color: "#666", mb: 2 }}>
+          {_("cal_feed_description")}
+        </Typography>
+        <TextField
+          fullWidth
+          size="small"
+          value={feedUrl}
+          InputProps={{
+            readOnly: true,
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={handleCopy} edge="end" size="small" title={_("cal_feed_copy")}>
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ "& .MuiInputBase-input": { fontSize: "0.8rem", fontFamily: "monospace" } }}
+        />
+        {copied && (
+          <Typography variant="caption" sx={{ color: "success.main", mt: 0.5, display: "block" }}>
+            {_("cal_feed_copied")}
+          </Typography>
+        )}
+      </AccordionDetails>
+    </Accordion>
+  );
 };
 
 type DialogAction = "confirm" | "reject" | "cancel";
@@ -419,6 +479,10 @@ const BookingsList = () => {
           {error}
         </Alert>
       </Snackbar>
+
+      {profile?.personal_access_token && (
+        <CalendarFeedSection token={profile.personal_access_token} />
+      )}
     </Box>
   );
 };

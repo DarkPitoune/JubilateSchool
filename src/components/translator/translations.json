@@ -174,7 +174,12 @@
     "admin_users": "Utilisateurs",
     "admin_impersonate": "Voir comme",
     "admin_viewing_as": "Vue en tant que",
-    "admin_stop_impersonation": "Arrêter"
+    "admin_stop_impersonation": "Arrêter",
+
+    "cal_feed_title": "Abonnement calendrier",
+    "cal_feed_description": "Ajoutez ce lien dans votre application de calendrier (Google Calendar, Apple Calendar, Outlook) pour voir vos cours à venir. Il se met à jour automatiquement.",
+    "cal_feed_copy": "Copier le lien",
+    "cal_feed_copied": "Copié !"
   },
   "en": {
     "flag": "🇫🇷",
@@ -351,6 +356,11 @@
     "admin_users": "Users",
     "admin_impersonate": "View as",
     "admin_viewing_as": "Viewing as",
-    "admin_stop_impersonation": "Stop"
+    "admin_stop_impersonation": "Stop",
+
+    "cal_feed_title": "Calendar subscription",
+    "cal_feed_description": "Add this link to your calendar app (Google Calendar, Apple Calendar, Outlook) to see your upcoming classes. It updates automatically.",
+    "cal_feed_copy": "Copy link",
+    "cal_feed_copied": "Copied!"
   }
 }
