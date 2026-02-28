@@ -115,6 +115,13 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
       return;
     }
 
+    // Free session: no Stripe redirect
+    if (data?.free) {
+      onBooked();
+      handleClose();
+      return;
+    }
+
     // Redirect to Stripe Checkout
     if (data?.url) {
       globalThis.location.href = data.url;
@@ -220,15 +227,17 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
           }}
         >
           <Typography variant="h5" sx={{ color: "#030340" }}>
-            {formatPrice(priceCents)}
+            {pricing?.hourly_rate_cents === 0 ? _("booking_free") : formatPrice(priceCents)}
           </Typography>
-          <Typography variant="body2" sx={{ color: "#666" }}>
-            {formatPrice(pricing?.hourly_rate_cents || 0)} / h
-          </Typography>
+          {pricing?.hourly_rate_cents !== 0 && (
+            <Typography variant="body2" sx={{ color: "#666" }}>
+              {formatPrice(pricing?.hourly_rate_cents || 0)} / h
+            </Typography>
+          )}
         </Box>
       </DialogContent>
       <DialogActions sx={{ flexDirection: "column", alignItems: "stretch", gap: 0.5 }}>
-        {loading && (
+        {loading && pricing?.hourly_rate_cents !== 0 && (
           <Typography variant="caption" sx={{ color: "#999", textAlign: "center" }}>
             {_("booking_redirecting_stripe")}
           </Typography>
@@ -240,7 +249,11 @@ const BookingDialog = ({ open, onClose, window: freeWindow, pricing, onBooked }:
             variant="contained"
             disabled={loading || !startTime || !duration}
           >
-            {loading ? _("loading") : _("booking_proceed_payment")}
+            {loading
+              ? _("loading")
+              : pricing?.hourly_rate_cents === 0
+              ? _("booking_proceed_free")
+              : _("booking_proceed_payment")}
           </Button>
         </Box>
       </DialogActions>

@@ -84,6 +84,13 @@ serve(async (req) => {
       );
     }
 
+    // Get student profile (for custom rate, email, timezone)
+    const { data: studentProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, email, timezone, custom_hourly_rate_cents")
+      .eq("id", user.id)
+      .single();
+
     // Get current pricing
     const { data: pricing } = await supabaseAdmin
       .from("pricing")
@@ -102,9 +109,9 @@ serve(async (req) => {
       );
     }
 
-    const price_cents = Math.round(
-      (duration_minutes / 60) * pricing.hourly_rate_cents
-    );
+    const hourlyRateCents =
+      studentProfile?.custom_hourly_rate_cents ?? pricing.hourly_rate_cents;
+    const price_cents = Math.round((duration_minutes / 60) * hourlyRateCents);
 
     // Insert booking as pending
     const { data: booking, error: insertError } = await supabaseAdmin
@@ -138,12 +145,16 @@ serve(async (req) => {
       );
     }
 
-    // Get student profile for Stripe metadata and timezone
-    const { data: studentProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name, email, timezone")
-      .eq("id", user.id)
-      .single();
+    // Free session: skip Stripe, notify teacher directly
+    if (price_cents === 0) {
+      await supabaseAdmin.functions.invoke("send-email", {
+        body: { type: "new_booking_teacher", booking_id: booking.id },
+      });
+
+      return new Response(JSON.stringify({ free: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Create Stripe Checkout Session (authorize only, don't capture)
     const siteUrl = site_url || Deno.env.get("SITE_URL") || "http://localhost:3000";

@@ -10,6 +10,7 @@ export interface Profile {
   preferred_lang: "fr" | "en";
   timezone: string;
   created_at: string;
+  custom_hourly_rate_cents: number | null;
 }
 
 export interface AvailabilityRange {

@@ -243,6 +243,7 @@ interface StudentSummary {
   id: string;
   full_name: string;
   email: string;
+  custom_hourly_rate_cents: number | null;
   bookings: Booking[];
   totalConfirmed: number;
   totalMinutes: number;
@@ -289,7 +290,7 @@ export function useStudentList() {
     queryFn: async () => {
       const { data: bookingsData } = await supabase
         .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(id, full_name, email, timezone)")
+        .select("*, profiles!bookings_student_id_fkey(id, full_name, email, timezone, custom_hourly_rate_cents)")
         .in("status", ["confirmed", "pending_confirmation"])
         .order("start_time", { ascending: false });
 
@@ -303,6 +304,7 @@ export function useStudentList() {
             id: sid,
             full_name: booking.profiles?.full_name || "",
             email: booking.profiles?.email || "",
+            custom_hourly_rate_cents: (booking.profiles as { custom_hourly_rate_cents?: number | null })?.custom_hourly_rate_cents ?? null,
             bookings: [],
             totalConfirmed: 0,
             totalMinutes: 0,
@@ -318,5 +320,19 @@ export function useStudentList() {
 
       return Array.from(studentMap.values());
     },
+  });
+}
+
+export function useUpdateStudentRate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ studentId, rateCents }: { studentId: string; rateCents: number | null }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ custom_hourly_rate_cents: rateCents })
+        .eq("id", studentId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["students"] }),
   });
 }

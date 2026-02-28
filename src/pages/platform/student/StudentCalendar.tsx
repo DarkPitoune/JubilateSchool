@@ -38,6 +38,13 @@ const StudentCalendar = () => {
 
   const loading = rangesLoading || bookingsLoading || pricingLoading;
 
+  const effectivePricing = useMemo(() => {
+    if (!pricing) return null;
+    const custom = profile?.custom_hourly_rate_cents;
+    if (custom === undefined || custom === null) return pricing;
+    return { ...pricing, hourly_rate_cents: custom };
+  }, [pricing, profile?.custom_hourly_rate_cents]);
+
   const freeWindows = useMemo(
     () => computeFreeWindows(ranges, rangeBookings),
     [ranges, rangeBookings]
@@ -148,7 +155,7 @@ const StudentCalendar = () => {
         />
       </Box>
 
-      {selectedWindow && pricing && (
+      {selectedWindow && effectivePricing && (
         <BookingDialog
           open={dialogOpen}
           onClose={() => {
@@ -156,7 +163,7 @@ const StudentCalendar = () => {
             setSelectedWindow(null);
           }}
           window={selectedWindow}
-          pricing={pricing}
+          pricing={effectivePricing}
           onBooked={handleBooked}
         />
       )}

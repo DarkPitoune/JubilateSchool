@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -14,12 +15,17 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
+  IconButton,
+  TextField,
 } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
-import { useStudentList } from "../../../hooks/useQueries";
+import { useStudentList, useUpdateStudentRate } from "../../../hooks/useQueries";
 
 const StudentList = () => {
   const _ = useTranslator();
@@ -29,6 +35,39 @@ const StudentList = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const { data: students = [], isLoading: loading } = useStudentList();
+  const updateRate = useUpdateStudentRate();
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+
+  const rateLabel = (rateCents: number | null) => {
+    if (rateCents === null) return _("students_rate_default");
+    if (rateCents === 0) return _("students_rate_free");
+    return `${rateCents / 100} €/h`;
+  };
+
+  const handleSave = (studentId: string) => {
+    const trimmed = editValue.trim();
+    let rateCents: number | null;
+    if (trimmed === "" || isNaN(Number(trimmed))) {
+      rateCents = null;
+    } else {
+      rateCents = Math.round(Number(trimmed) * 100);
+    }
+    updateRate.mutate({ studentId, rateCents });
+    setEditingId(null);
+    setEditValue("");
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditValue("");
+  };
+
+  const startEdit = (studentId: string, rateCents: number | null) => {
+    setEditingId(studentId);
+    setEditValue(rateCents === null ? "" : String(rateCents / 100));
+  };
 
   return (
     <Box>
@@ -48,6 +87,7 @@ const StudentList = () => {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {students.map((student) => {
             const lastBooking = student.bookings[0];
+            const isEditing = editingId === student.id;
             return (
               <Card key={student.id} variant="outlined" sx={{ borderRadius: 2 }}>
                 <CardContent sx={{ pb: 1.5, "&:last-child": { pb: 1.5 } }}>
@@ -68,6 +108,39 @@ const StudentList = () => {
                       ? format(new Date(lastBooking.start_time), "PPP", { locale })
                       : "—"}
                   </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", mt: 0.5, gap: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {_("students_hourly_rate")}:
+                    </Typography>
+                    {isEditing ? (
+                      <>
+                        <TextField
+                          type="number"
+                          size="small"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          sx={{ width: 90 }}
+                          inputProps={{ min: 0, step: 1 }}
+                          autoFocus
+                        />
+                        <IconButton size="small" onClick={() => handleSave(student.id)} color="success">
+                          <CheckIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" onClick={handleCancel}>
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    ) : (
+                      <>
+                        <Typography variant="body2" color="text.secondary">
+                          {rateLabel(student.custom_hourly_rate_cents)}
+                        </Typography>
+                        <IconButton size="small" onClick={() => startEdit(student.id, student.custom_hourly_rate_cents)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    )}
+                  </Box>
                 </CardContent>
               </Card>
             );
@@ -87,11 +160,13 @@ const StudentList = () => {
                   {_("students_total_hours")}
                 </TableCell>
                 <TableCell sx={{ color: "white" }}>{_("students_last_booking")}</TableCell>
+                <TableCell sx={{ color: "white" }}>{_("students_hourly_rate")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {students.map((student) => {
                 const lastBooking = student.bookings[0];
+                const isEditing = editingId === student.id;
                 return (
                   <TableRow key={student.id} hover>
                     <TableCell sx={{ fontWeight: 500 }}>{student.full_name}</TableCell>
@@ -106,6 +181,38 @@ const StudentList = () => {
                       {lastBooking
                         ? format(new Date(lastBooking.start_time), "PPP", { locale })
                         : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        {isEditing ? (
+                          <>
+                            <TextField
+                              type="number"
+                              size="small"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              sx={{ width: 90 }}
+                              inputProps={{ min: 0, step: 1 }}
+                              autoFocus
+                            />
+                            <IconButton size="small" onClick={() => handleSave(student.id)} color="success">
+                              <CheckIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" onClick={handleCancel}>
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </>
+                        ) : (
+                          <>
+                            <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>
+                              {rateLabel(student.custom_hourly_rate_cents)}
+                            </Typography>
+                            <IconButton size="small" onClick={() => startEdit(student.id, student.custom_hourly_rate_cents)}>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 );
