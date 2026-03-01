@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14?target=deno";
 import { corsHeaders } from "../_shared/cors.ts";
 import { supabaseAdmin, getSupabaseUser } from "../_shared/supabase.ts";
+import { captureException } from "../_shared/sentry.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
@@ -156,6 +157,7 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
+    captureException(err, { function: "create-checkout-session" });
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

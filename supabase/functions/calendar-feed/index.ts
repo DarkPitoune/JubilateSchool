@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
+import { captureException } from "../_shared/sentry.ts";
 
 function icsEscape(text: string): string {
   return text.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
@@ -99,6 +100,7 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
+    captureException(err, { function: "calendar-feed" });
     return new Response("Internal error", { status: 500 });
   }
 });

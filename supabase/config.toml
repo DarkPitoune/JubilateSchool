@@ -18,3 +18,6 @@ verify_jwt = false
 
 [functions.send-class-reminders]
 verify_jwt = false
+
+[functions.calendar-feed]
+verify_jwt = false

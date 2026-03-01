@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import * as webpush from "https://esm.sh/jsr/@negrel/webpush@0.3.0";
 import { supabaseAdmin } from "../_shared/supabase.ts";
+import { captureException } from "../_shared/sentry.ts";
 
 const siteUrl = Deno.env.get("SITE_URL")!;
 
@@ -105,6 +106,7 @@ serve(async (_req) => {
     return json({ reminded });
   } catch (err) {
     console.error("Error:", err);
+    captureException(err, { function: "send-class-reminders" });
     return json({ error: (err as Error).message }, 500);
   }
 });

@@ -8,7 +8,10 @@
       "Bash(npm uninstall:*)",
       "Bash(npx web-push:*)",
       "WebSearch",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:school.jubilate.fr)",
+      "Bash(vercel ls:*)",
+      "WebFetch(domain:www.bugsink.com)"
     ]
   }
 }

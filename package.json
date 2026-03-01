@@ -13,6 +13,7 @@
     "@mui/icons-material": "^5.8.4",
     "@mui/material": "^5.9.1",
     "@mui/x-date-pickers": "^8.27.0",
+    "@sentry/react": "^10.40.0",
     "@stripe/stripe-js": "^8.7.0",
     "@supabase/supabase-js": "^2.97.0",
     "@tanstack/react-query": "^5.90.21",
@@ -23,6 +24,7 @@
     "react-router-dom": "^6.20.0"
   },
   "devDependencies": {
+    "@sentry/cli": "^2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.2.0",
@@ -33,6 +35,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:deploy": "npm run build && sentry-cli sourcemaps inject dist && sentry-cli sourcemaps upload dist && find dist -name '*.map' -delete",
     "preview": "vite preview"
   }
 }
