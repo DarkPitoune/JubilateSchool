@@ -247,41 +247,51 @@ export function useStudentList() {
   return useQuery({
     queryKey: ["students"],
     queryFn: async () => {
+      // Fetch all student profiles (no filtering by bookings)
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, custom_hourly_rate_cents")
+        .eq("role", "student")
+        .order("full_name");
+
+      if (!profiles) return [];
+
+      // Fetch active bookings for enrichment
       const { data: bookingsData } = await supabase
         .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(id, full_name, email, timezone, custom_hourly_rate_cents)")
+        .select("*")
         .in("status", ["confirmed", "pending_confirmation"])
         .order("start_time", { ascending: false });
 
-      if (!bookingsData) return [];
-
-      const studentMap = new Map<string, StudentSummary>();
-      for (const booking of bookingsData as unknown as Booking[]) {
-        const sid = booking.student_id;
-        if (!studentMap.has(sid)) {
-          studentMap.set(sid, {
-            id: sid,
-            full_name: booking.profiles?.full_name || "",
-            email: booking.profiles?.email || "",
-            custom_hourly_rate_cents: (booking.profiles as { custom_hourly_rate_cents?: number | null })?.custom_hourly_rate_cents ?? null,
-            bookings: [],
-            totalConfirmed: 0,
-            totalMinutes: 0,
-          });
-        }
-        const s = studentMap.get(sid)!;
-        s.bookings.push(booking);
-        if (booking.status === "confirmed") {
-          s.totalConfirmed++;
-          // Derive duration from start/end times (always 60 min for new bookings)
-          const durationMin = Math.round(
-            (new Date(booking.end_time).getTime() - new Date(booking.start_time).getTime()) / 60000
-          );
-          s.totalMinutes += durationMin;
-        }
+      const bookingsByStudent = new Map<string, Booking[]>();
+      for (const booking of (bookingsData ?? []) as unknown as Booking[]) {
+        const arr = bookingsByStudent.get(booking.student_id) ?? [];
+        arr.push(booking);
+        bookingsByStudent.set(booking.student_id, arr);
       }
 
-      return Array.from(studentMap.values());
+      return profiles.map((p) => {
+        const bookings = bookingsByStudent.get(p.id) ?? [];
+        let totalConfirmed = 0;
+        let totalMinutes = 0;
+        for (const b of bookings) {
+          if (b.status === "confirmed") {
+            totalConfirmed++;
+            totalMinutes += Math.round(
+              (new Date(b.end_time).getTime() - new Date(b.start_time).getTime()) / 60000
+            );
+          }
+        }
+        return {
+          id: p.id,
+          full_name: p.full_name || "",
+          email: p.email || "",
+          custom_hourly_rate_cents: p.custom_hourly_rate_cents ?? null,
+          bookings,
+          totalConfirmed,
+          totalMinutes,
+        } as StudentSummary;
+      });
     },
   });
 }
