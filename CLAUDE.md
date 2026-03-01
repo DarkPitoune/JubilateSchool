@@ -8,9 +8,9 @@ JubilateSchool is a bilingual (French/English) tutoring platform for a math and 
 
 ## Commands
 
-- `npm run dev` — dev server (Vite, port 3000)
-- `npm run build` — type-check + production build (outputs to `dist/`)
-- `npm run preview` — preview production build
+- `pnpm dev` — dev server (Vite, port 3000)
+- `pnpm build` — type-check + production build (outputs to `dist/`)
+- `pnpm preview` — preview production build
 
 ## Architecture
 
@@ -108,8 +108,8 @@ Edge Functions (Supabase secrets):
 - All components are functional with hooks (no class components)
 - TypeScript (`.ts`/`.tsx`) for all frontend code; Edge Functions are also TypeScript (Deno)
 - Shared types live in `src/types/index.ts` — type props, context values, and function signatures; don't over-annotate things TypeScript can infer
-- Prefer npm (package-lock.json)
-- `npm run build` runs `tsc --noEmit` before `vite build` for type checking
+- Prefer pnpm (pnpm-lock.yaml)
+- `pnpm build` runs `tsc --noEmit` before `vite build` for type checking
 - Code-splitting: all platform pages are lazy-loaded via `React.lazy`
 - Data fetching: `@tanstack/react-query` via custom hooks in `src/hooks/useQueries.ts`
 - Timezone support: `date-fns-tz` for timezone-aware date handling; profiles store user timezone

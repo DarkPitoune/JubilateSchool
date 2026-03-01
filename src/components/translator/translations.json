@@ -83,6 +83,9 @@
     "dashboard_upcoming_bookings": "Cours à venir",
     "dashboard_no_upcoming": "Aucun cours prévu cette semaine.",
 
+    "dashboard_default_rate": "Tarif par défaut",
+    "dashboard_rate_saved": "Tarif mis à jour",
+
     "status_pending_confirmation": "En attente",
     "status_confirmed": "Confirmé",
     "status_rejected": "Refusé",
@@ -264,6 +267,9 @@
     "dashboard_pending_requests": "Pending requests",
     "dashboard_upcoming_bookings": "Upcoming sessions",
     "dashboard_no_upcoming": "No sessions scheduled this week.",
+
+    "dashboard_default_rate": "Default rate",
+    "dashboard_rate_saved": "Rate updated",
 
     "status_pending_confirmation": "Pending",
     "status_confirmed": "Confirmed",

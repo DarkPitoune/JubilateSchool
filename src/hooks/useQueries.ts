@@ -109,6 +109,19 @@ export function usePricing() {
   });
 }
 
+export function useUpdatePricing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ hourlyRateCents }: { hourlyRateCents: number }) => {
+      const { error } = await supabase
+        .from("pricing")
+        .insert({ hourly_rate_cents: hourlyRateCents, effective_from: new Date().toISOString() });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pricing"] }),
+  });
+}
+
 export function useMyBookings(userId: string | undefined) {
   return useQuery({
     queryKey: ["my-bookings", userId],
