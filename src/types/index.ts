@@ -27,6 +27,7 @@ export interface AvailabilitySlot {
   teacher_id: string;
   start_time: string; // end_time = start_time + 1h (always)
   created_at: string;
+  is_booked?: boolean; // only present from get_student_slots RPC
 }
 
 export type BookingStatus =

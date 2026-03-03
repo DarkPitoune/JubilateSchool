@@ -67,29 +67,8 @@ export function useAvailableSlots() {
   return useQuery({
     queryKey: ["availability-slots", "available"],
     queryFn: async () => {
-      const now = new Date().toISOString();
-
-      // Get future slots
-      const { data: slotsData } = await supabase
-        .from("availability_slots")
-        .select("*")
-        .gte("start_time", now)
-        .order("start_time", { ascending: true });
-
-      const slots = (slotsData || []) as AvailabilitySlot[];
-      if (slots.length === 0) return [];
-
-      // Get slot IDs that have an active booking
-      const slotIds = slots.map((s) => s.id);
-      const { data: bookedData } = await supabase
-        .from("bookings")
-        .select("availability_slot_id")
-        .in("availability_slot_id", slotIds)
-        .in("status", ["pending_confirmation", "confirmed"]);
-
-      const bookedSlotIds = new Set((bookedData || []).map((b) => b.availability_slot_id));
-
-      return slots.filter((s) => !bookedSlotIds.has(s.id));
+      const { data } = await supabase.rpc("get_student_slots");
+      return (data || []) as AvailabilitySlot[];
     },
   });
 }

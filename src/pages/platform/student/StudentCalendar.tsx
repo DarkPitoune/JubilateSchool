@@ -61,15 +61,28 @@ const StudentCalendar = () => {
     new Date(new Date(startIso).getTime() + 60 * 60 * 1000).toISOString();
 
   const calendarEvents = [
-    ...availableSlots.map((s) => ({
-      id: `slot-${s.id}`,
-      title: _("booking_available"),
-      start: s.start_time,
-      end: slotEnd(s.start_time),
-      backgroundColor: "#4caf50",
-      borderColor: "#388e3c",
-      extendedProps: { type: "available", slotId: s.id },
-    })),
+    ...availableSlots
+      .filter((s) => !s.is_booked)
+      .map((s) => ({
+        id: `slot-${s.id}`,
+        title: _("booking_available"),
+        start: s.start_time,
+        end: slotEnd(s.start_time),
+        backgroundColor: "#4caf50",
+        borderColor: "#388e3c",
+        extendedProps: { type: "available", slotId: s.id },
+      })),
+    ...availableSlots
+      .filter((s) => s.is_booked)
+      .map((s) => ({
+        id: `taken-${s.id}`,
+        title: _("booking_taken"),
+        start: s.start_time,
+        end: slotEnd(s.start_time),
+        backgroundColor: "#bdbdbd",
+        borderColor: "#9e9e9e",
+        extendedProps: { type: "taken" },
+      })),
     ...myBookings.map((b) => ({
       id: `my-${b.id}`,
       title:
