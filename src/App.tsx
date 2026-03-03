@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
+import AuthCallbackHandler from "./components/AuthCallbackHandler";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleGate from "./components/RoleGate";
 import { useAuth } from "./contexts/AuthContext";
@@ -26,6 +27,8 @@ const PlatformRedirect = () => {
 
 const App = () => {
   return (
+    <>
+    <AuthCallbackHandler />
     <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -86,6 +89,7 @@ const App = () => {
           <Route path="*" element={<PlatformRedirect />} />
         </Route>
       </Routes>
+    </>
   );
 };
 

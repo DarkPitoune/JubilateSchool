@@ -11,7 +11,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:school.jubilate.fr)",
       "Bash(vercel ls:*)",
-      "WebFetch(domain:www.bugsink.com)"
+      "WebFetch(domain:www.bugsink.com)",
+      "Bash(pnpm build:*)"
     ]
   }
 }

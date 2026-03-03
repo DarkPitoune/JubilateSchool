@@ -182,7 +182,10 @@
     "cal_feed_title": "Abonnement calendrier",
     "cal_feed_description": "Ajoutez ce lien dans votre application de calendrier (Google Calendar, Apple Calendar, Outlook) pour voir vos cours à venir. Il se met à jour automatiquement.",
     "cal_feed_copy": "Copier le lien",
-    "cal_feed_copied": "Copié !"
+    "cal_feed_copied": "Copié !",
+
+    "auth_error_link_expired": "Le lien de confirmation a expiré. Veuillez vous reconnecter pour recevoir un nouveau lien.",
+    "auth_error_generic": "Une erreur est survenue lors de la confirmation. Veuillez réessayer."
   },
   "en": {
     "flag": "🇫🇷",
@@ -367,6 +370,9 @@
     "cal_feed_title": "Calendar subscription",
     "cal_feed_description": "Add this link to your calendar app (Google Calendar, Apple Calendar, Outlook) to see your upcoming classes. It updates automatically.",
     "cal_feed_copy": "Copy link",
-    "cal_feed_copied": "Copied!"
+    "cal_feed_copied": "Copied!",
+
+    "auth_error_link_expired": "The confirmation link has expired. Please log in again to receive a new link.",
+    "auth_error_generic": "An error occurred during confirmation. Please try again."
   }
 }
