@@ -48,6 +48,10 @@ const RegisterPage = () => {
       setError(_("register_error"));
       setLoading(false);
     } else {
+      // Notify teacher of new student (fire-and-forget)
+      supabase.functions.invoke("notify-new-student", {
+        body: { student_name: fullName, student_email: email },
+      });
       navigate("/auth/verify");
     }
   };

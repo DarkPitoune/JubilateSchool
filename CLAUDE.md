@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-JubilateSchool is a bilingual (French/English) tutoring platform for a math and physics tutoring service. Built with Vite, React 18, React Router 6, and Material-UI 5. Backend powered by Supabase (auth, database, edge functions) with Stripe for payments and Resend for emails.
+JubilateSchool is a bilingual (French/English) tutoring platform for a math and physics tutoring service. Built with Vite, React 18, React Router 6, and Material-UI 5. Backend powered by Supabase (auth, database, edge functions) with Stripe for payments and Resend for emails. Supabase project ID: `qezyxkjorhtlcevemgno` (linked via `supabase/.temp/project-ref`).
 
 ## Commands
 

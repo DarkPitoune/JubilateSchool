@@ -158,7 +158,11 @@ const BookingsList = () => {
 
     if (dialogAction === "cancel") {
       cancelMutation.mutate(
-        { bookingId: selectedBooking.id },
+        {
+          bookingId: selectedBooking.id,
+          priceCents: selectedBooking.price_cents,
+          wasConfirmed: selectedBooking.status === "confirmed",
+        },
         { onError: () => setError(_("bookings_action_error")) }
       );
     } else {

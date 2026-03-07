@@ -96,11 +96,19 @@ serve(async (req) => {
 
     // Handle Stripe
     if (booking.stripe_payment_intent_id) {
-      if (booking.status === "pending_confirmation") {
-        // Cancel the payment intent (authorization not yet captured)
+      const paymentIntent = await stripe.paymentIntents.retrieve(
+        booking.stripe_payment_intent_id
+      );
+
+      if (
+        paymentIntent.status === "requires_capture" ||
+        paymentIntent.status === "requires_confirmation" ||
+        paymentIntent.status === "requires_action"
+      ) {
+        // Authorization not yet captured — cancel the PaymentIntent
         await stripe.paymentIntents.cancel(booking.stripe_payment_intent_id);
-      } else if (booking.status === "confirmed") {
-        // Refund the captured payment
+      } else if (paymentIntent.status === "succeeded") {
+        // Payment was captured — issue a refund
         await stripe.refunds.create({
           payment_intent: booking.stripe_payment_intent_id,
         });

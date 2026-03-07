@@ -12,7 +12,9 @@
       "WebFetch(domain:school.jubilate.fr)",
       "Bash(vercel ls:*)",
       "WebFetch(domain:www.bugsink.com)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "mcp__plugin_supabase_supabase__list_projects",
+      "Bash(pnpm tsc:*)"
     ]
   }
 }

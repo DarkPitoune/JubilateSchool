@@ -11,7 +11,7 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 async function createZoomMeeting(
   startTime: string,
   durationMinutes: number,
-  studentName: string
+  studentName: string,
 ): Promise<string | null> {
   try {
     const accountId = Deno.env.get("ZOOM_ACCOUNT_ID");
@@ -32,7 +32,7 @@ async function createZoomMeeting(
           Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
 
     if (!tokenRes.ok) {
@@ -101,11 +101,11 @@ serve(async (req) => {
 
     if (!booking) {
       return new Response(
-        renderHTML(
-          "Not found",
-          "Booking not found or already processed."
-        ),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+        renderHTML("Not found", "Booking not found or already processed."),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "text/html" },
+        },
       );
     }
 
@@ -118,8 +118,8 @@ serve(async (req) => {
     const studentName = booking.profiles?.full_name || "Student";
     const zoomLink = await createZoomMeeting(
       booking.start_time,
-      booking.duration_minutes,
-      studentName
+      60,
+      studentName,
     );
 
     // Update booking status
@@ -136,27 +136,46 @@ serve(async (req) => {
       },
     });
 
+    // Send confirmation emails
+    await supabaseAdmin.functions.invoke("send-email", {
+      body: {
+        type: "booking_confirmed_teacher",
+        booking_id: booking.id,
+      },
+    });
+
     return new Response(
       renderHTML(
         "Booking Confirmed ✓",
-        "The payment has been captured and the student has been notified."
+        "The payment has been captured and the teacher and student have been notified.",
+        booking.price_cents / 100,
       ),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html" } },
     );
   } catch (err) {
     console.error("Error:", err);
     captureException(err, { function: "confirm-booking" });
     return new Response(
       renderHTML("Error", `Something went wrong: ${err.message}`),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "text/html" } },
     );
   }
 });
 
-function renderHTML(title: string, message: string): string {
+function renderHTML(
+  title: string,
+  message: string,
+  revenueEur?: number,
+): string {
+  const umamiScript =
+    revenueEur !== undefined
+      ? `<script defer src="https://cloud.umami.is/script.js" data-website-id="95feb0d5-5c53-4be9-9a81-ea5328ad67b7"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{if(window.umami)umami.track('booking-confirmed',{revenue:${revenueEur},currency:'EUR'});})</script>`
+      : "";
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} — Jubilate School</title>
+${umamiScript}
 <style>body{font-family:system-ui;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;}
 .card{background:white;padding:3rem;border-radius:1rem;text-align:center;max-width:400px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
 h1{color:#030340;margin-bottom:1rem;}p{color:#666;}</style>

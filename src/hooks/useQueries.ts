@@ -36,9 +36,15 @@ export function useBookingAction() {
       if (!res.ok) throw new Error("Request failed");
       return { bookingId: booking.id, action };
     },
-    onSuccess: () => {
+    onSuccess: (_data, { booking, action }) => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      if (action === "confirm") {
+        window.umami?.track("booking-confirmed", {
+          revenue: booking.price_cents / 100,
+          currency: "EUR",
+        });
+      }
     },
   });
 }
@@ -47,16 +53,22 @@ export function useCancelBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ bookingId }: { bookingId: string }) => {
+    mutationFn: async ({ bookingId }: { bookingId: string; priceCents: number; wasConfirmed: boolean }) => {
       const { error } = await supabase.functions.invoke("cancel-booking", {
         body: { booking_id: bookingId },
       });
       if (error) throw new Error(error.message || "Request failed");
       return { bookingId };
     },
-    onSuccess: () => {
+    onSuccess: (_data, { wasConfirmed, priceCents }) => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      if (wasConfirmed) {
+        window.umami?.track("booking-cancelled", {
+          revenue: -(priceCents / 100),
+          currency: "EUR",
+        });
+      }
     },
   });
 }

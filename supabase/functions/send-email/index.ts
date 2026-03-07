@@ -18,7 +18,9 @@ serve(async (req) => {
     // Fetch booking with student profile
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, profiles!bookings_student_id_fkey(full_name, email, preferred_lang, timezone)")
+      .select(
+        "*, profiles!bookings_student_id_fkey(full_name, email, preferred_lang, timezone)",
+      )
       .eq("id", booking_id)
       .single();
 
@@ -53,13 +55,18 @@ serve(async (req) => {
       });
 
     // Primary date string for each recipient
-    const dateStrStudent = fmtDate(studentTz, studentLang === "fr" ? "fr-FR" : "en-US");
+    const dateStrStudent = fmtDate(
+      studentTz,
+      studentLang === "fr" ? "fr-FR" : "en-US",
+    );
     const dateStrTeacher = fmtDate(teacherTz, "fr-FR");
     // Secondary (counterpart) date strings
     const dateStrStudentForTeacher = fmtDate(studentTz, "fr-FR");
-    const dateStrTeacherForStudent = fmtDate(teacherTz, studentLang === "fr" ? "fr-FR" : "en-US");
+    const dateStrTeacherForStudent = fmtDate(
+      teacherTz,
+      studentLang === "fr" ? "fr-FR" : "en-US",
+    );
 
-    const price = (booking.price_cents / 100).toFixed(2);
     const confirmUrl = `${SUPABASE_URL}/functions/v1/confirm-booking?token=${booking.confirmation_token}`;
     const rejectUrl = `${SUPABASE_URL}/functions/v1/reject-booking?token=${booking.confirmation_token}`;
 
@@ -76,8 +83,6 @@ serve(async (req) => {
           <p><strong>Élève :</strong> ${studentName}</p>
           <p><strong>Date (votre heure) :</strong> ${dateStrTeacher}</p>
           <p style="color:#888;font-size:13px;"><strong>Heure élève :</strong> ${dateStrStudentForTeacher}</p>
-          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
-          <p><strong>Prix :</strong> ${price} €</p>
           ${booking.note ? `<p><strong>Note :</strong> ${booking.note}</p>` : ""}
           <br/>
           <p>
@@ -107,8 +112,6 @@ serve(async (req) => {
           <p>Votre cours a été confirmé.</p>
           <p><strong>Date :</strong> ${dateStrStudent}</p>
           <p style="color:#888;font-size:13px;"><strong>Heure prof :</strong> ${dateStrTeacherForStudent}</p>
-          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
-          <p><strong>Prix :</strong> ${price} €</p>
           ${zoomBtnStudent}
           <p>À bientôt !</p>
         `
@@ -117,10 +120,25 @@ serve(async (req) => {
           <p>Your session has been confirmed.</p>
           <p><strong>Date:</strong> ${dateStrStudent}</p>
           <p style="color:#888;font-size:13px;"><strong>Teacher's time:</strong> ${dateStrTeacherForStudent}</p>
-          <p><strong>Duration:</strong> ${booking.duration_minutes} min</p>
-          <p><strong>Price:</strong> €${price}</p>
           ${zoomBtnStudent}
           <p>See you soon!</p>
+        `;
+        break;
+      }
+
+      case "booking_confirmed_teacher": {
+        const zoomBtnTeacher = booking.zoom_meeting_link
+          ? `<p style="margin-top:16px;"><a href="${booking.zoom_meeting_link}" style="background:#2D8CFF;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Rejoindre sur Zoom</a></p>`
+          : "";
+        to = teacherEmail;
+        subject = `Votre cours avec ${studentName} est confirmé !`;
+        html = `
+          <h2>Réservation confirmée</h2>
+          <p>Votre cours a été confirmé.</p>
+          <p><strong>Date :</strong> ${dateStrTeacher}</p>
+          <p style="color:#888;font-size:13px;"><strong>Heure pour l'eleve :</strong> ${dateStrStudentForTeacher}</p>
+          ${zoomBtnTeacher}
+          <p>À bientôt !</p>
         `;
         break;
       }
@@ -177,7 +195,6 @@ serve(async (req) => {
           <p><strong>Élève :</strong> ${studentName}</p>
           <p><strong>Date (votre heure) :</strong> ${dateStrTeacher}</p>
           <p style="color:#888;font-size:13px;"><strong>Heure élève :</strong> ${dateStrStudentForTeacher}</p>
-          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
           <p>L'élève a annulé ce cours. Le paiement a été annulé ou remboursé.</p>
         `;
         break;
@@ -193,16 +210,12 @@ serve(async (req) => {
             ? `
           <h2>Cours annulé</h2>
           <p>Votre cours du ${dateStrStudent} a été annulé par le professeur.</p>
-          <p><strong>Durée :</strong> ${booking.duration_minutes} min</p>
-          <p><strong>Prix :</strong> ${price} €</p>
           <p>Si le paiement avait été capturé, vous serez remboursé sous quelques jours.</p>
           <p>N'hésitez pas à réserver un autre créneau.</p>
         `
             : `
           <h2>Session Cancelled</h2>
           <p>Your session on ${dateStrStudent} was cancelled by the teacher.</p>
-          <p><strong>Duration:</strong> ${booking.duration_minutes} min</p>
-          <p><strong>Price:</strong> €${price}</p>
           <p>If the payment was captured, you will be refunded within a few days.</p>
           <p>Feel free to book another slot.</p>
         `;
@@ -214,7 +227,7 @@ serve(async (req) => {
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+          },
         );
     }
 
