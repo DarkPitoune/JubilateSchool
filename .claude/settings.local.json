@@ -14,7 +14,12 @@
       "WebFetch(domain:www.bugsink.com)",
       "Bash(pnpm build:*)",
       "mcp__plugin_supabase_supabase__list_projects",
-      "Bash(pnpm tsc:*)"
+      "Bash(pnpm tsc:*)",
+      "mcp__plugin_supabase_supabase__get_logs",
+      "Bash(curl:*)",
+      "Read(//Users/pierre.dhebrail/Documents/perso/JubilateSchool/**)",
+      "Bash(bash /tmp/fix-zoom.sh)",
+      "Bash(find /Users/pierre.dhebrail/Documents/perso/JubilateSchool/node_modules/.pnpm -path *@supabase+auth-js* -name GoTrueClient* -type f)"
     ]
   }
 }

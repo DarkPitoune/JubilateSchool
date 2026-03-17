@@ -26,45 +26,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return data as Profile;
   };
 
+  // Phase 1: Listen for auth state changes — sync only, no Supabase API calls
+  // (the callback fires inside a held lock, so calling supabase.from() here deadlocks)
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user) {
-        const p = await fetchProfile(session.user.id);
-        if (p && p.role !== "admin") {
-          // Auto-detect browser timezone and sync if different (skip for admin)
-          const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          if (browserTz && browserTz !== p.timezone) {
-            supabase
-              .from("profiles")
-              .update({ timezone: browserTz })
-              .eq("id", p.id)
-              .then(() => {});
-            p.timezone = browserTz;
-          }
-        }
-        setRealProfile(p);
-      } else {
+      if (!session?.user) {
         setRealProfile(null);
         setImpersonating(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        supabase.auth.refreshSession();
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Phase 2: Fetch profile once we have a user id (runs outside the auth lock)
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const p = await fetchProfile(userId);
+      if (cancelled) return;
+
+      if (p && p.role !== "admin") {
+        const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (browserTz && browserTz !== p.timezone) {
+          supabase
+            .from("profiles")
+            .update({ timezone: browserTz })
+            .eq("id", p.id)
+            .then(() => {});
+          p.timezone = browserTz;
+        }
       }
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
+      setRealProfile(p);
+      setLoading(false);
+    })();
 
     return () => {
-      subscription.unsubscribe();
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      cancelled = true;
     };
-  }, []);
+  }, [session?.user?.id]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
