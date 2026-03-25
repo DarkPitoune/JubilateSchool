@@ -41,6 +41,7 @@ import { useLang } from "../../../hooks/useLang";
 import { useBookingsList, useBookingAction, useCancelBooking } from "../../../hooks/useQueries";
 import { useCounterpartTz } from "../../../hooks/useCounterpartTz";
 import { formatCounterpartHint } from "../../../lib/timezone";
+import { fullName } from "../../../types";
 import type { Booking, BookingStatus } from "../../../types";
 
 const statusColors: Record<BookingStatus, ChipProps["color"]> = {
@@ -225,7 +226,7 @@ const BookingsList = () => {
                   )}
                   {isTeacher && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      {_("bookings_student")}: {b.profiles?.full_name || "—"}
+                      {_("bookings_student")}: {fullName(b.profiles)}
                     </Typography>
                   )}
                   <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>
@@ -347,7 +348,7 @@ const BookingsList = () => {
                       )}
                     </TableCell>
                     {isTeacher && (
-                      <TableCell>{b.profiles?.full_name || "—"}</TableCell>
+                      <TableCell>{fullName(b.profiles)}</TableCell>
                     )}
                     <TableCell align="center">
                       {new Intl.NumberFormat(

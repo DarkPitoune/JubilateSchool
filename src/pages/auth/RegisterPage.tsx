@@ -21,7 +21,8 @@ const RegisterPage = () => {
   const _ = useTranslator();
   const navigate = useNavigate();
 
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [preferredLang, setPreferredLang] = useState("fr");
@@ -38,7 +39,8 @@ const RegisterPage = () => {
       password,
       options: {
         data: {
-          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
           preferred_lang: preferredLang,
         },
       },
@@ -50,7 +52,7 @@ const RegisterPage = () => {
     } else {
       // Notify teacher of new student (fire-and-forget)
       supabase.functions.invoke("notify-new-student", {
-        body: { student_name: fullName, student_email: email },
+        body: { student_name: `${firstName} ${lastName}`.trim(), student_email: email },
       });
       navigate("/auth/verify");
     }
@@ -80,14 +82,22 @@ const RegisterPage = () => {
           )}
 
           <form onSubmit={handleSubmit}>
-            <TextField
-              label={_("full_name")}
-              fullWidth
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+              <TextField
+                label={_("first_name")}
+                fullWidth
+                required
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+              <TextField
+                label={_("last_name")}
+                fullWidth
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </Box>
             <TextField
               label={_("email")}
               type="email"

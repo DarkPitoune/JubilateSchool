@@ -52,7 +52,7 @@ serve(async (req) => {
     // Get student profile (for custom rate, email, timezone)
     const { data: studentProfile } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, email, timezone, custom_hourly_rate_cents")
+      .select("first_name, last_name, email, timezone, custom_hourly_rate_cents")
       .eq("id", user.id)
       .single();
 
@@ -145,7 +145,7 @@ serve(async (req) => {
       ],
       metadata: {
         booking_id: booking.id,
-        student_name: studentProfile?.full_name || "",
+        student_name: `${studentProfile?.first_name || ""} ${studentProfile?.last_name || ""}`.trim(),
       },
       success_url: `${siteUrl}/app/booking/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/app/booking/cancel?booking_id=${booking.id}`,

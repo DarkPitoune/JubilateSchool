@@ -27,6 +27,7 @@ import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
 import { useAdminDashboard } from "../../../hooks/useQueries";
 import { useAuth } from "../../../contexts/AuthContext";
+import { fullName } from "../../../types";
 import type { BookingStatus } from "../../../types";
 
 const statusColors: Record<BookingStatus, ChipProps["color"]> = {
@@ -147,7 +148,7 @@ const AdminPage = () => {
               <TableBody>
                 {(data?.recentBookings ?? []).map((booking) => (
                   <TableRow key={booking.id}>
-                    <TableCell>{booking.profiles?.full_name}</TableCell>
+                    <TableCell>{fullName(booking.profiles)}</TableCell>
                     <TableCell>
                       {format(new Date(booking.start_time), "PPp", { locale })}
                     </TableCell>
@@ -174,7 +175,7 @@ const AdminPage = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>{_("full_name")}</TableCell>
+                  <TableCell>{_("first_name")} {_("last_name")}</TableCell>
                   <TableCell>{_("email")}</TableCell>
                   <TableCell>Role</TableCell>
                   <TableCell>{_("bookings_actions")}</TableCell>
@@ -185,7 +186,7 @@ const AdminPage = () => {
                   .filter((p) => p.role !== "admin")
                   .map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell>{p.full_name}</TableCell>
+                      <TableCell>{fullName(p)}</TableCell>
                       <TableCell>{p.email}</TableCell>
                       <TableCell>
                         <Chip

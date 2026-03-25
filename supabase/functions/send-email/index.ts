@@ -19,7 +19,7 @@ serve(async (req) => {
     const { data: booking } = await supabaseAdmin
       .from("bookings")
       .select(
-        "*, profiles!bookings_student_id_fkey(full_name, email, preferred_lang, timezone)",
+        "*, profiles!bookings_student_id_fkey(first_name, last_name, email, preferred_lang, timezone)",
       )
       .eq("id", booking_id)
       .single();
@@ -40,7 +40,7 @@ serve(async (req) => {
       .single();
 
     const studentLang = booking.profiles?.preferred_lang || "fr";
-    const studentName = booking.profiles?.full_name || "Student";
+    const studentName = `${booking.profiles?.first_name || ""} ${booking.profiles?.last_name || ""}`.trim() || "Student";
     const studentEmail = booking.profiles?.email;
     const teacherEmail = teacherProfile?.email;
 

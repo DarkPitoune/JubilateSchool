@@ -10,7 +10,7 @@ export function useBookingsList(role: string | undefined, userId: string | undef
     queryFn: async () => {
       let query = supabase
         .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(full_name, timezone)")
+        .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
         .order("start_time", { ascending: false });
 
       if (role !== "teacher") {
@@ -142,14 +142,14 @@ export function useDashboard() {
       const [{ data: upcoming }, { data: pending }, { data: students }] = await Promise.all([
         supabase
           .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(full_name, timezone)")
+          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
           .eq("status", "confirmed")
           .gte("start_time", now)
           .lte("start_time", weekFromNow)
           .order("start_time", { ascending: true }),
         supabase
           .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(full_name, timezone)")
+          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
           .eq("status", "pending_confirmation")
           .order("created_at", { ascending: false }),
         supabase
@@ -188,7 +188,7 @@ export function useTeacherAvailability(teacherId: string | undefined) {
         const slotIds = slots.map((s) => s.id);
         const { data: bookingsData } = await supabase
           .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(full_name, timezone)")
+          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
           .in("availability_slot_id", slotIds)
           .in("status", ["pending_confirmation", "confirmed"]);
         bookings = (bookingsData || []) as Booking[];
@@ -204,7 +204,8 @@ export function useTeacherAvailability(teacherId: string | undefined) {
 
 interface StudentSummary {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   custom_hourly_rate_cents: number | null;
   bookings: Booking[];
@@ -222,7 +223,7 @@ export function useAdminDashboard() {
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase
           .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(full_name, email)")
+          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, email)")
           .order("created_at", { ascending: false }),
       ]);
 
@@ -254,9 +255,9 @@ export function useStudentList() {
       // Fetch all student profiles (no filtering by bookings)
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name, email, custom_hourly_rate_cents")
+        .select("id, first_name, last_name, email, custom_hourly_rate_cents")
         .eq("role", "student")
-        .order("full_name");
+        .order("last_name");
 
       if (!profiles) return [];
 
@@ -288,7 +289,8 @@ export function useStudentList() {
         }
         return {
           id: p.id,
-          full_name: p.full_name || "",
+          first_name: p.first_name || "",
+          last_name: p.last_name || "",
           email: p.email || "",
           custom_hourly_rate_cents: p.custom_hourly_rate_cents ?? null,
           bookings,

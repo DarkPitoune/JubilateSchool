@@ -5,7 +5,8 @@ import type { Session } from "@supabase/supabase-js";
 export interface Profile {
   id: string;
   role: "student" | "teacher" | "admin";
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   preferred_lang: "fr" | "en";
   timezone: string;
@@ -53,7 +54,7 @@ export interface Booking {
   confirmation_token: string;
   zoom_meeting_link: string | null;
   created_at: string;
-  profiles?: { full_name: string; email?: string; id?: string; timezone?: string };
+  profiles?: { first_name: string; last_name: string; email?: string; id?: string; timezone?: string };
 }
 
 export interface Pricing {
@@ -73,6 +74,11 @@ export interface AuthContextValue {
   signOut: () => Promise<void>;
   impersonate: (profile: Profile | null) => void;
 }
+
+// Helpers
+
+export const fullName = (p: { first_name: string; last_name: string } | undefined | null) =>
+  p ? `${p.first_name} ${p.last_name}`.trim() || "—" : "—";
 
 // Translator
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { fullName } from "../../../types";
 import {
   Box,
   Typography,
@@ -93,7 +94,7 @@ const StudentList = () => {
                 <CardContent sx={{ pb: 1.5, "&:last-child": { pb: 1.5 } }}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      {student.full_name}
+                      {fullName(student)}
                     </Typography>
                     <Chip label={`${student.totalConfirmed} ${_("students_sessions").toLowerCase()}`} size="small" color="primary" />
                   </Box>
@@ -169,7 +170,7 @@ const StudentList = () => {
                 const isEditing = editingId === student.id;
                 return (
                   <TableRow key={student.id} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>{student.full_name}</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>{fullName(student)}</TableCell>
                     <TableCell>{student.email}</TableCell>
                     <TableCell align="center">
                       <Chip label={student.totalConfirmed} size="small" color="primary" />

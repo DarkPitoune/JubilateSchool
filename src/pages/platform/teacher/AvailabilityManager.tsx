@@ -26,6 +26,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
 import { useTeacherAvailability } from "../../../hooks/useQueries";
+import { fullName } from "../../../types";
 import type { AvailabilitySlot } from "../../../types";
 
 const AvailabilityManager = () => {
@@ -139,7 +140,7 @@ const AvailabilityManager = () => {
     return {
       id: s.id,
       title: isBooked
-        ? booking!.profiles?.full_name || _("avail_booking")
+        ? fullName(booking!.profiles) || _("avail_booking")
         : _("avail_available"),
       start: s.start_time,
       end: slotEnd(s.start_time),

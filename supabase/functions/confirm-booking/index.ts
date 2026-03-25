@@ -94,7 +94,7 @@ serve(async (req) => {
     // Find the booking by confirmation token
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, profiles!bookings_student_id_fkey(full_name)")
+      .select("*, profiles!bookings_student_id_fkey(first_name, last_name)")
       .eq("confirmation_token", token)
       .eq("status", "pending_confirmation")
       .single();
@@ -115,7 +115,7 @@ serve(async (req) => {
     }
 
     // Create Zoom meeting (best-effort)
-    const studentName = booking.profiles?.full_name || "Student";
+    const studentName = `${booking.profiles?.first_name || ""} ${booking.profiles?.last_name || ""}`.trim() || "Student";
     const zoomLink = await createZoomMeeting(
       booking.start_time,
       60,

@@ -26,7 +26,7 @@ serve(async (req) => {
     // Look up profile by personal_access_token
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("id, role, full_name")
+      .select("id, role, first_name, last_name")
       .eq("personal_access_token", token)
       .single();
 
@@ -40,7 +40,7 @@ serve(async (req) => {
     // Fetch confirmed bookings
     let query = supabaseAdmin
       .from("bookings")
-      .select("id, start_time, end_time, zoom_meeting_link, profiles!bookings_student_id_fkey(full_name)")
+      .select("id, start_time, end_time, zoom_meeting_link, profiles!bookings_student_id_fkey(first_name, last_name)")
       .eq("status", "confirmed")
       .gte("end_time", cutoff)
       .order("start_time", { ascending: true });
@@ -60,7 +60,7 @@ serve(async (req) => {
     const events = (bookings || []).map((b) => {
       const summary =
         profile.role === "teacher"
-          ? `Jubilate — ${(b.profiles as { full_name: string })?.full_name || "Student"}`
+          ? `Jubilate — ${(b.profiles as { first_name: string; last_name: string })?.first_name || "Student"}`
           : "Jubilate School";
 
       const lines = [

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { fullName } from "../../types";
 import {
   AppBar,
   Box,
@@ -250,7 +251,7 @@ const PlatformLayout = () => {
             </Typography>
             {counterpartTz && <CounterpartClock timezone={counterpartTz} />}
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              {profile?.full_name?.split(" ")[0]}
+              {profile?.first_name}
             </Typography>
           </Toolbar>
         </AppBar>
@@ -269,7 +270,7 @@ const PlatformLayout = () => {
             }}
           >
             <Typography variant="body2">
-              {_("admin_viewing_as")} <strong>{profile?.full_name}</strong> (
+              {_("admin_viewing_as")} <strong>{fullName(profile)}</strong> (
               {profile?.role})
             </Typography>
             <Chip

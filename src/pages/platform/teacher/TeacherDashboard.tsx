@@ -27,6 +27,7 @@ import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
 import { useDashboard, usePricing, useUpdatePricing } from "../../../hooks/useQueries";
 import { formatCounterpartHint } from "../../../lib/timezone";
+import { fullName } from "../../../types";
 import type { BookingStatus } from "../../../types";
 
 const statusColors: Record<BookingStatus, ChipProps["color"]> = {
@@ -195,7 +196,7 @@ const TeacherDashboard = () => {
               <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.5, "&:last-child": { pb: 1.5 }, gap: 1, flexWrap: "wrap" }}>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography variant="body1" sx={{ fontWeight: 500 }} noWrap>
-                    {booking.profiles?.full_name}
+                    {fullName(booking.profiles)}
                   </Typography>
                   <Typography variant="body2" sx={{ color: "#666" }} noWrap>
                     {format(new Date(booking.start_time), "PPPp", { locale })} — 1h
@@ -234,7 +235,7 @@ const TeacherDashboard = () => {
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography variant="body1" sx={{ fontWeight: 500 }} noWrap>
-                      {booking.profiles?.full_name}
+                      {fullName(booking.profiles)}
                     </Typography>
                     <Typography variant="body2" sx={{ color: "#666" }} noWrap>
                       {format(new Date(booking.start_time), "PPPp", { locale })} — 1h
