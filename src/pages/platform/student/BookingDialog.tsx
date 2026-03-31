@@ -24,10 +24,11 @@ interface BookingDialogProps {
   onClose: () => void;
   slot: AvailabilitySlot;
   pricing: Pricing;
+  couponUsed: boolean;
   onBooked: () => void;
 }
 
-const BookingDialog = ({ open, onClose, slot, pricing, onBooked }: BookingDialogProps) => {
+const BookingDialog = ({ open, onClose, slot, pricing, couponUsed, onBooked }: BookingDialogProps) => {
   const _ = useTranslator();
   const lang = useLang();
   const locale = lang === "en" ? enUS : fr;
@@ -132,15 +133,16 @@ const BookingDialog = ({ open, onClose, slot, pricing, onBooked }: BookingDialog
           placeholder={_("booking_note_placeholder")}
         />
 
-        <TextField
-          label={_("coupon_label")}
-          fullWidth
-          size="small"
-          value={couponCode}
-          onChange={(e) => setCouponCode(e.target.value)}
-          sx={{ mb: 2 }}
-          placeholder={_("coupon_placeholder")}
-        />
+        {!couponUsed && (
+          <TextField
+            label={_("coupon_label")}
+            fullWidth
+            size="small"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+        )}
 
         <Box
           sx={{

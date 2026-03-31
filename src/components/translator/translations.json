@@ -138,7 +138,6 @@
     "booking_error_select_time": "Veuillez sélectionner une heure et une durée.",
     "booking_error_generic": "Erreur lors de la réservation. Veuillez réessayer.",
     "coupon_label": "Code promo",
-    "coupon_placeholder": "Ex: BIENVENUE",
     "coupon_invalid": "Code promo invalide.",
     "coupon_already_used": "Vous avez déjà utilisé ce code promo.",
     "booking_success_title": "Demande envoyée !",

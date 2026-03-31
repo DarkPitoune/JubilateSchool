@@ -169,6 +169,7 @@ const StudentCalendar = () => {
               }}
               slot={selectedSlot}
               pricing={effectivePricing}
+              couponUsed={profile?.coupon_used ?? false}
               onBooked={handleBooked}
             />
           )}
