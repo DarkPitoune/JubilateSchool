@@ -34,6 +34,7 @@ const BookingDialog = ({ open, onClose, slot, pricing, onBooked }: BookingDialog
   const teacherTz = useCounterpartTz();
 
   const [note, setNote] = useState("");
+  const [couponCode, setCouponCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -61,12 +62,17 @@ const BookingDialog = ({ open, onClose, slot, pricing, onBooked }: BookingDialog
           slot_id: slot.id,
           note: note.trim(),
           site_url: window.location.origin,
+          ...(couponCode.trim() && { coupon_code: couponCode.trim() }),
         },
       }
     );
 
     if (fnError || data?.error) {
-      setError(data?.error || _("booking_error_generic"));
+      const errKey = data?.error;
+      const translated = errKey === "coupon_invalid" || errKey === "coupon_already_used"
+        ? _(errKey)
+        : errKey || _("booking_error_generic");
+      setError(translated);
       setLoading(false);
       return;
     }
@@ -86,6 +92,7 @@ const BookingDialog = ({ open, onClose, slot, pricing, onBooked }: BookingDialog
 
   const handleClose = () => {
     setNote("");
+    setCouponCode("");
     setError("");
     setLoading(false);
     onClose();
@@ -123,6 +130,16 @@ const BookingDialog = ({ open, onClose, slot, pricing, onBooked }: BookingDialog
           onChange={(e) => setNote(e.target.value)}
           sx={{ mb: 2, mt: 1 }}
           placeholder={_("booking_note_placeholder")}
+        />
+
+        <TextField
+          label={_("coupon_label")}
+          fullWidth
+          size="small"
+          value={couponCode}
+          onChange={(e) => setCouponCode(e.target.value)}
+          sx={{ mb: 2 }}
+          placeholder={_("coupon_placeholder")}
         />
 
         <Box

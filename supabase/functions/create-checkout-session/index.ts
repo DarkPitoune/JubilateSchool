@@ -8,6 +8,8 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
 });
 
+const COUPON_CODE = "BIENVENUE";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -26,7 +28,7 @@ serve(async (req) => {
       });
     }
 
-    const { slot_id, note, site_url } = await req.json();
+    const { slot_id, note, site_url, coupon_code } = await req.json();
 
     // Validate the slot exists
     const { data: slot } = await supabaseAdmin
@@ -52,7 +54,7 @@ serve(async (req) => {
     // Get student profile (for custom rate, email, timezone)
     const { data: studentProfile } = await supabaseAdmin
       .from("profiles")
-      .select("first_name, last_name, email, timezone, custom_hourly_rate_cents")
+      .select("first_name, last_name, email, timezone, custom_hourly_rate_cents, coupon_used")
       .eq("id", user.id)
       .single();
 
@@ -77,7 +79,27 @@ serve(async (req) => {
     const hourlyRateCents =
       studentProfile?.custom_hourly_rate_cents ?? pricing.hourly_rate_cents;
     // Always 1 hour
-    const price_cents = hourlyRateCents;
+    let price_cents = hourlyRateCents;
+
+    // Coupon code validation
+    let couponApplied = false;
+    if (coupon_code) {
+      const normalized = String(coupon_code).toUpperCase().trim();
+      if (normalized !== COUPON_CODE) {
+        return new Response(
+          JSON.stringify({ error: "coupon_invalid" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (studentProfile?.coupon_used) {
+        return new Response(
+          JSON.stringify({ error: "coupon_already_used" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      price_cents = 0;
+      couponApplied = true;
+    }
 
     // Insert booking as pending
     const { data: booking, error: insertError } = await supabaseAdmin
@@ -108,6 +130,14 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    // Mark coupon as used
+    if (couponApplied) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ coupon_used: true })
+        .eq("id", user.id);
     }
 
     // Free session: skip Stripe, notify teacher directly

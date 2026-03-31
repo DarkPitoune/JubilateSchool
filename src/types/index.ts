@@ -12,6 +12,7 @@ export interface Profile {
   timezone: string;
   created_at: string;
   custom_hourly_rate_cents: number | null;
+  coupon_used: boolean;
   personal_access_token: string;
 }
 

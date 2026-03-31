@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN coupon_used BOOLEAN NOT NULL DEFAULT false;
