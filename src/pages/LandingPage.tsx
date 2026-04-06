@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Box } from "@mui/material";
-import { Classes, WhoAmI, Witnesses, Welcome, ContactCost } from "../views";
+import { Classes, WhoAmI, Welcome, ContactCost } from "../views";
+import Testimonies from "../views/Testimonies";
 import "../App.css";
 
 const LandingPage = () => {
@@ -15,12 +16,12 @@ const LandingPage = () => {
           maxWidth: "70em",
           margin: "1em auto 0",
           padding: { xs: "1em 16px 0", sm: "1em 24px 0" },
-          "& > section": { minHeight: "80dvh", display: "flex", flexDirection: "column", justifyContent: "center" },
+          "& > section": { minHeight: "80svh", display: "flex", flexDirection: "column", justifyContent: "center" },
         }}
       >
         <Classes id="classes" ref={(el) => { titlesRef.current[0] = el; }} />
         <WhoAmI id="whoami" ref={(el) => { titlesRef.current[1] = el; }} />
-        <Witnesses id="witnesses" ref={(el) => { titlesRef.current[2] = el; }} />
+        <Testimonies id="witnesses" ref={(el) => { titlesRef.current[2] = el; }} />
         <ContactCost
           id="contactcost"
           ref={(el) => { titlesRef.current[3] = el; }}

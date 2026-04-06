@@ -23,6 +23,7 @@ export default defineConfig({
     }),
   ],
   server: {
+    allowedHosts: ["preview.pcdhebrail.fr"],
     port: 3000,
   },
   build: {

@@ -54,8 +54,8 @@ const ContactCost = forwardRef<HTMLElement, { id: string }>((props, ref) => {
                 variant="outlined"
                 startIcon={<EmailIcon />}
                 component="a"
-                color="secondary"
-                href="mailto:jubilateschool@yahoo.com"
+                color="primary"
+                href="mailto:school@jubilate.fr"
                 sx={{
                   textTransform: "none",
                   width: "fit-content",
@@ -64,7 +64,7 @@ const ContactCost = forwardRef<HTMLElement, { id: string }>((props, ref) => {
                   fontSize: { xs: "0.8rem", sm: "0.875rem" },
                 }}
               >
-                jubilateschool@yahoo.com
+                school@jubilate.fr
               </Button>
               <Button
                 variant="contained"
