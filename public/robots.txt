@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+
+Sitemap: https://jubilate.fr/sitemap.xml
