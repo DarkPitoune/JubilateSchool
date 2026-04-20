@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { fullName } from "../../../types";
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Card,
   CardContent,
   Chip,
@@ -25,8 +24,230 @@ import EditIcon from "@mui/icons-material/Edit";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { useTranslator } from "../../../components";
+import { PageTitle, Section } from "../../../components/platform";
+import { palette } from "../../../components/platformTheme";
 import { useLang } from "../../../hooks/useLang";
 import { useStudentList, useUpdateStudentRate } from "../../../hooks/useQueries";
+
+interface StudentRowProps {
+  student: ReturnType<typeof useStudentList>["data"] extends
+    | readonly (infer T)[]
+    | undefined
+    ? T
+    : never;
+  isEditing: boolean;
+  editValue: string;
+  setEditValue: (v: string) => void;
+  startEdit: (studentId: string, rateCents: number | null) => void;
+  handleSave: (studentId: string) => void;
+  handleCancel: () => void;
+  rateLabel: (rateCents: number | null) => string;
+  _: (k: string) => string;
+  locale: typeof fr | typeof enUS;
+}
+
+const StudentCard = ({
+  student,
+  isEditing,
+  editValue,
+  setEditValue,
+  startEdit,
+  handleSave,
+  handleCancel,
+  rateLabel,
+  _,
+  locale,
+}: StudentRowProps) => {
+  const lastBooking = student.bookings[0];
+  return (
+    <Card>
+      <CardContent sx={{ pb: 1.75, "&:last-child": { pb: 1.75 } }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 1,
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 500, color: palette.ink }}
+          >
+            {fullName(student)}
+          </Typography>
+          <Chip
+            label={`${student.totalConfirmed} ${_(
+              "students_sessions",
+            ).toLowerCase()}`}
+            variant="outlined"
+            size="small"
+            sx={{
+              color: palette.ink,
+              borderColor: palette.ink,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          />
+        </Box>
+        <Typography
+          variant="body2"
+          sx={{ color: palette.inkSoft, fontSize: "0.82rem" }}
+        >
+          {student.email}
+        </Typography>
+        <Typography variant="body2" sx={{ color: palette.inkMute, mt: 0.5 }}>
+          {_("students_total_hours")}:{" "}
+          <Box
+            component="span"
+            sx={{ color: palette.ink, fontVariantNumeric: "tabular-nums" }}
+          >
+            {(student.totalMinutes / 60).toFixed(1)}h
+          </Box>
+        </Typography>
+        <Typography variant="body2" sx={{ color: palette.inkMute, mt: 0.5 }}>
+          {_("students_last_booking")}:{" "}
+          {lastBooking
+            ? format(new Date(lastBooking.start_time), "PPP", { locale })
+            : "—"}
+        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            mt: 0.75,
+            gap: 0.5,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: palette.inkMute }}>
+            {_("students_hourly_rate")}:
+          </Typography>
+          {isEditing ? (
+            <>
+              <TextField
+                type="number"
+                size="small"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                sx={{ width: 90 }}
+                inputProps={{ min: 0, step: 1 }}
+                autoFocus
+              />
+              <IconButton
+                size="small"
+                onClick={() => handleSave(student.id)}
+                sx={{ color: palette.sage }}
+              >
+                <CheckIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={handleCancel}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ color: palette.ink }}>
+                {rateLabel(student.custom_hourly_rate_cents)}
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={() =>
+                  startEdit(student.id, student.custom_hourly_rate_cents)
+                }
+                sx={{ color: palette.inkMute }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+const StudentTableRow = ({
+  student,
+  isEditing,
+  editValue,
+  setEditValue,
+  startEdit,
+  handleSave,
+  handleCancel,
+  rateLabel,
+  locale,
+}: StudentRowProps) => {
+  const lastBooking = student.bookings[0];
+  return (
+    <TableRow hover>
+      <TableCell sx={{ fontWeight: 500 }}>{fullName(student)}</TableCell>
+      <TableCell sx={{ color: palette.inkSoft, fontSize: "0.82rem" }}>
+        {student.email}
+      </TableCell>
+      <TableCell
+        align="center"
+        sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 500 }}
+      >
+        {student.totalConfirmed}
+      </TableCell>
+      <TableCell
+        align="center"
+        sx={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {(student.totalMinutes / 60).toFixed(1)}h
+      </TableCell>
+      <TableCell sx={{ whiteSpace: "nowrap", color: palette.inkMute }}>
+        {lastBooking
+          ? format(new Date(lastBooking.start_time), "PPP", { locale })
+          : "—"}
+      </TableCell>
+      <TableCell>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {isEditing ? (
+            <>
+              <TextField
+                type="number"
+                size="small"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                sx={{ width: 90 }}
+                inputProps={{ min: 0, step: 1 }}
+                autoFocus
+              />
+              <IconButton
+                size="small"
+                onClick={() => handleSave(student.id)}
+                sx={{ color: palette.sage }}
+              >
+                <CheckIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={handleCancel}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </>
+          ) : (
+            <>
+              <Typography
+                variant="body2"
+                sx={{ whiteSpace: "nowrap", color: palette.ink }}
+              >
+                {rateLabel(student.custom_hourly_rate_cents)}
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={() =>
+                  startEdit(student.id, student.custom_hourly_rate_cents)
+                }
+                sx={{ color: palette.inkMute }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+      </TableCell>
+    </TableRow>
+  );
+};
 
 const StudentList = () => {
   const _ = useTranslator();
@@ -70,157 +291,108 @@ const StudentList = () => {
     setEditValue(rateCents === null ? "" : String(rateCents / 100));
   };
 
+  const { active, dormant } = useMemo(() => {
+    const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
+    const active: typeof students = [];
+    const dormant: typeof students = [];
+    for (const s of students) {
+      const hasRecent = s.bookings.some(
+        (b) => new Date(b.start_time).getTime() >= cutoff,
+      );
+      (hasRecent ? active : dormant).push(s);
+    }
+    return { active, dormant };
+  }, [students]);
+
+  const renderGroup = (group: typeof students) =>
+    isMobile ? (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        {group.map((student) => (
+          <StudentCard
+            key={student.id}
+            student={student}
+            isEditing={editingId === student.id}
+            editValue={editValue}
+            setEditValue={setEditValue}
+            startEdit={startEdit}
+            handleSave={handleSave}
+            handleCancel={handleCancel}
+            rateLabel={rateLabel}
+            _={_}
+            locale={locale}
+          />
+        ))}
+      </Box>
+    ) : (
+      <TableContainer sx={{ maxWidth: 1100 }}>
+        <Table sx={{ minWidth: 500 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>{_("students_name")}</TableCell>
+              <TableCell>{_("students_email")}</TableCell>
+              <TableCell align="center">{_("students_sessions")}</TableCell>
+              <TableCell align="center">{_("students_total_hours")}</TableCell>
+              <TableCell>{_("students_last_booking")}</TableCell>
+              <TableCell>{_("students_hourly_rate")}</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {group.map((student) => (
+              <StudentTableRow
+                key={student.id}
+                student={student}
+                isEditing={editingId === student.id}
+                editValue={editValue}
+                setEditValue={setEditValue}
+                startEdit={startEdit}
+                handleSave={handleSave}
+                handleCancel={handleCancel}
+                rateLabel={rateLabel}
+                _={_}
+                locale={locale}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3, color: "#030340", fontFamily: "'Kalam', cursive" }}>
-        {_("students_title")}
-      </Typography>
+      <PageTitle
+        kicker={_("students_kicker")}
+        title={_("students_title")}
+        subtitle={_("students_subtitle")}
+      />
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
         </Box>
       ) : students.length === 0 ? (
-        <Typography variant="body1" sx={{ color: "#888" }}>
+        <Typography sx={{ color: palette.inkMute, fontStyle: "italic" }}>
           {_("students_empty")}
         </Typography>
-      ) : isMobile ? (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {students.map((student) => {
-            const lastBooking = student.bookings[0];
-            const isEditing = editingId === student.id;
-            return (
-              <Card key={student.id} variant="outlined" sx={{ borderRadius: 2 }}>
-                <CardContent sx={{ pb: 1.5, "&:last-child": { pb: 1.5 } }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      {fullName(student)}
-                    </Typography>
-                    <Chip label={`${student.totalConfirmed} ${_("students_sessions").toLowerCase()}`} size="small" color="primary" />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {student.email}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {_("students_total_hours")}: {(student.totalMinutes / 60).toFixed(1)}h
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {_("students_last_booking")}: {lastBooking
-                      ? format(new Date(lastBooking.start_time), "PPP", { locale })
-                      : "—"}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", mt: 0.5, gap: 0.5 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {_("students_hourly_rate")}:
-                    </Typography>
-                    {isEditing ? (
-                      <>
-                        <TextField
-                          type="number"
-                          size="small"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          sx={{ width: 90 }}
-                          inputProps={{ min: 0, step: 1 }}
-                          autoFocus
-                        />
-                        <IconButton size="small" onClick={() => handleSave(student.id)} color="success">
-                          <CheckIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={handleCancel}>
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </>
-                    ) : (
-                      <>
-                        <Typography variant="body2" color="text.secondary">
-                          {rateLabel(student.custom_hourly_rate_cents)}
-                        </Typography>
-                        <IconButton size="small" onClick={() => startEdit(student.id, student.custom_hourly_rate_cents)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </Box>
       ) : (
-        <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
-          <Table sx={{ minWidth: 500 }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "#030340" }}>
-                <TableCell sx={{ color: "white" }}>{_("students_name")}</TableCell>
-                <TableCell sx={{ color: "white" }}>{_("students_email")}</TableCell>
-                <TableCell sx={{ color: "white" }} align="center">
-                  {_("students_sessions")}
-                </TableCell>
-                <TableCell sx={{ color: "white" }} align="center">
-                  {_("students_total_hours")}
-                </TableCell>
-                <TableCell sx={{ color: "white" }}>{_("students_last_booking")}</TableCell>
-                <TableCell sx={{ color: "white" }}>{_("students_hourly_rate")}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {students.map((student) => {
-                const lastBooking = student.bookings[0];
-                const isEditing = editingId === student.id;
-                return (
-                  <TableRow key={student.id} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>{fullName(student)}</TableCell>
-                    <TableCell>{student.email}</TableCell>
-                    <TableCell align="center">
-                      <Chip label={student.totalConfirmed} size="small" color="primary" />
-                    </TableCell>
-                    <TableCell align="center">
-                      {(student.totalMinutes / 60).toFixed(1)}h
-                    </TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>
-                      {lastBooking
-                        ? format(new Date(lastBooking.start_time), "PPP", { locale })
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        {isEditing ? (
-                          <>
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              sx={{ width: 90 }}
-                              inputProps={{ min: 0, step: 1 }}
-                              autoFocus
-                            />
-                            <IconButton size="small" onClick={() => handleSave(student.id)} color="success">
-                              <CheckIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={handleCancel}>
-                              <CloseIcon fontSize="small" />
-                            </IconButton>
-                          </>
-                        ) : (
-                          <>
-                            <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>
-                              {rateLabel(student.custom_hourly_rate_cents)}
-                            </Typography>
-                            <IconButton size="small" onClick={() => startEdit(student.id, student.custom_hourly_rate_cents)}>
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </>
-                        )}
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <>
+          {active.length > 0 && (
+            <Section
+              title={_("students_section_active")}
+              count={active.length}
+            >
+              {renderGroup(active)}
+            </Section>
+          )}
+          {dormant.length > 0 && (
+            <Section
+              title={_("students_section_dormant")}
+              count={dormant.length}
+              defaultExpanded={false}
+            >
+              {renderGroup(dormant)}
+            </Section>
+          )}
+        </>
       )}
     </Box>
   );
