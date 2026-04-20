@@ -213,6 +213,20 @@ interface StudentSummary {
   totalMinutes: number;
 }
 
+export function useStudentsForPicker() {
+  return useQuery({
+    queryKey: ["students-picker"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email")
+        .eq("role", "student")
+        .order("last_name");
+      return (data || []) as Pick<Profile, "id" | "first_name" | "last_name" | "email">[];
+    },
+  });
+}
+
 // ── Admin dashboard ──
 
 export function useAdminDashboard() {

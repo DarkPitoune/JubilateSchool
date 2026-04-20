@@ -47,6 +47,17 @@ serve(async (req) => {
       );
     }
 
+    // Reserved slots can only be booked by the designated student
+    if (slot.reserved_for_student_id && slot.reserved_for_student_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "This slot is reserved for another student" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Derive start/end times (slot is always 1 hour)
     const start_time = slot.start_time;
     const end_time = new Date(new Date(start_time).getTime() + 60 * 60 * 1000).toISOString();

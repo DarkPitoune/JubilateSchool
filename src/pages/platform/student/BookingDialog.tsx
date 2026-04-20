@@ -109,6 +109,12 @@ const BookingDialog = ({ open, onClose, slot, pricing, couponUsed, onBooked }: B
           </Alert>
         )}
 
+        {slot.reserved_for_student_id && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {_("booking_reserved_for_you")}
+          </Alert>
+        )}
+
         <Typography variant="body2" sx={{ mb: 0.5, color: "#666" }}>
           {format(new Date(slotStart), "PPPp", { locale })}
           {" — "}

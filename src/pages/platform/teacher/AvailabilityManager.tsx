@@ -8,6 +8,8 @@ import {
   DialogActions,
   Button,
   Alert,
+  Autocomplete,
+  TextField,
   CircularProgress,
   useTheme,
   useMediaQuery,
@@ -25,9 +27,11 @@ import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
 import { useLang } from "../../../hooks/useLang";
-import { useTeacherAvailability } from "../../../hooks/useQueries";
+import { useTeacherAvailability, useStudentsForPicker } from "../../../hooks/useQueries";
 import { fullName } from "../../../types";
 import type { AvailabilitySlot } from "../../../types";
+
+type StudentOption = { id: string; first_name: string; last_name: string; email: string };
 
 const AvailabilityManager = () => {
   const _ = useTranslator();
@@ -41,12 +45,17 @@ const AvailabilityManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [pendingSlotTime, setPendingSlotTime] = useState<Date | null>(null);
+  const [reserveFor, setReserveFor] = useState<StudentOption | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const { data, isLoading } = useTeacherAvailability(profile?.id);
   const slots = data?.slots ?? [];
   const bookings = data?.bookings ?? [];
+  const { data: students = [] } = useStudentsForPicker();
+
+  const studentById = (id: string | null | undefined) =>
+    id ? students.find((s) => s.id === id) ?? null : null;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["availability-slots"] });
@@ -69,6 +78,7 @@ const AvailabilityManager = () => {
     } else {
       setSelectedSlot(null);
       setPendingSlotTime(slotTime);
+      setReserveFor(null);
     }
     setError("");
     setDialogOpen(true);
@@ -94,7 +104,11 @@ const AvailabilityManager = () => {
 
     const { error: insertError } = await supabase
       .from("availability_slots")
-      .insert({ teacher_id: profile!.id, start_time: pendingSlotTime.toISOString() });
+      .insert({
+        teacher_id: profile!.id,
+        start_time: pendingSlotTime.toISOString(),
+        reserved_for_student_id: reserveFor?.id ?? null,
+      });
 
     setSaving(false);
     if (insertError) {
@@ -102,6 +116,7 @@ const AvailabilityManager = () => {
       return;
     }
     setDialogOpen(false);
+    setReserveFor(null);
     invalidate();
   };
 
@@ -137,23 +152,40 @@ const AvailabilityManager = () => {
   const calendarEvents = slots.map((s) => {
     const booking = bookings.find((b) => b.availability_slot_id === s.id);
     const isBooked = !!booking;
+    const reservedStudent = !isBooked ? studentById(s.reserved_for_student_id) : null;
+    const isReserved = !!reservedStudent;
+
+    let title: string;
+    if (isBooked) {
+      title = fullName(booking!.profiles) || _("avail_booking");
+    } else if (isReserved) {
+      title = `${_("avail_reserved_for")} ${fullName(reservedStudent)}`;
+    } else {
+      title = _("avail_available");
+    }
+
+    const backgroundColor = isBooked
+      ? booking!.status === "confirmed"
+        ? "#1976d2"
+        : "#ed6c02"
+      : isReserved
+      ? "#9c27b0"
+      : "#4caf50";
+    const borderColor = isBooked
+      ? booking!.status === "confirmed"
+        ? "#1565c0"
+        : "#e65100"
+      : isReserved
+      ? "#7b1fa2"
+      : "#388e3c";
+
     return {
       id: s.id,
-      title: isBooked
-        ? fullName(booking!.profiles) || _("avail_booking")
-        : _("avail_available"),
+      title,
       start: s.start_time,
       end: slotEnd(s.start_time),
-      backgroundColor: isBooked
-        ? booking!.status === "confirmed"
-          ? "#1976d2"
-          : "#ed6c02"
-        : "#4caf50",
-      borderColor: isBooked
-        ? booking!.status === "confirmed"
-          ? "#1565c0"
-          : "#e65100"
-        : "#388e3c",
+      backgroundColor,
+      borderColor,
       extendedProps: { type: isBooked ? "booking" : "availability" },
     };
   });
@@ -224,6 +256,30 @@ const AvailabilityManager = () => {
                   {" — "}
                   {format(new Date(dialogSlotTime.getTime() + 60 * 60 * 1000), "p", { locale })}
                 </Typography>
+              )}
+              {!selectedSlot && (
+                <Autocomplete
+                  options={students}
+                  value={reserveFor}
+                  onChange={(_e, v) => setReserveFor(v)}
+                  getOptionLabel={(o) => fullName(o)}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  sx={{ mt: 2 }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={_("avail_reserve_for_label")}
+                      placeholder={_("avail_reserve_for_placeholder")}
+                      size="small"
+                    />
+                  )}
+                />
+              )}
+              {selectedSlot?.reserved_for_student_id && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  {_("avail_reserved_for")}{" "}
+                  {fullName(studentById(selectedSlot.reserved_for_student_id))}
+                </Alert>
               )}
             </DialogContent>
             <DialogActions>

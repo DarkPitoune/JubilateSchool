@@ -63,15 +63,18 @@ const StudentCalendar = () => {
   const calendarEvents = [
     ...availableSlots
       .filter((s) => !s.is_booked)
-      .map((s) => ({
-        id: `slot-${s.id}`,
-        title: _("booking_available"),
-        start: s.start_time,
-        end: slotEnd(s.start_time),
-        backgroundColor: "#4caf50",
-        borderColor: "#388e3c",
-        extendedProps: { type: "available", slotId: s.id },
-      })),
+      .map((s) => {
+        const isReservedForMe = s.reserved_for_student_id === profile?.id;
+        return {
+          id: `slot-${s.id}`,
+          title: isReservedForMe ? _("booking_reserved_for_you") : _("booking_available"),
+          start: s.start_time,
+          end: slotEnd(s.start_time),
+          backgroundColor: isReservedForMe ? "#9c27b0" : "#4caf50",
+          borderColor: isReservedForMe ? "#7b1fa2" : "#388e3c",
+          extendedProps: { type: "available", slotId: s.id },
+        };
+      }),
     ...availableSlots
       .filter((s) => s.is_booked)
       .map((s) => ({
