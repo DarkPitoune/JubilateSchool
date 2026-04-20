@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.9.3",
+    "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.9.3",
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
@@ -40,7 +42,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/prerender.mjs",
     "build:deploy": "npm run build && sentry-cli sourcemaps inject dist && sentry-cli sourcemaps upload dist && find dist -name '*.map' -delete",
     "preview": "vite preview"
   }

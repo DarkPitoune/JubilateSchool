@@ -23,8 +23,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const root = ReactDOM.createRoot(document.getElementById("root")!);
-root.render(
+const rootEl = document.getElementById("root")!;
+const tree = (
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
@@ -39,3 +39,8 @@ root.render(
     </ThemeProvider>
   </React.StrictMode>
 );
+if (rootEl.hasChildNodes()) {
+  ReactDOM.hydrateRoot(rootEl, tree);
+} else {
+  ReactDOM.createRoot(rootEl).render(tree);
+}

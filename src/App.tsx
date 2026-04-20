@@ -27,8 +27,7 @@ const PlatformRedirect = () => {
 
 const HomeRoute = () => {
   const { session, loading } = useAuth();
-  if (loading) return null;
-  if (session) return <Navigate to="/app" replace />;
+  if (!loading && session) return <Navigate to="/app" replace />;
   return <LandingPage />;
 };
 
@@ -38,6 +37,7 @@ const App = () => {
     <AuthCallbackHandler />
     <Routes>
         <Route path="/" element={<HomeRoute />} />
+        <Route path="/en" element={<HomeRoute />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/verify" element={<VerifyEmailPage />} />

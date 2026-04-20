@@ -8,6 +8,16 @@
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="fr" href="https://www.jubilateschool.fr/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.jubilateschool.fr/en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.jubilateschool.fr/" />
+  </url>
+  <url>
+    <loc>https://www.jubilateschool.fr/en</loc>
+    <lastmod>2026-04-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.jubilateschool.fr/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.jubilateschool.fr/en" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://www.jubilateschool.fr/" />
   </url>
 </urlset>
