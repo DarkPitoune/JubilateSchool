@@ -5,4 +5,4 @@ Disallow: /login
 Disallow: /register
 Disallow: /auth/
 
-Sitemap: https://jubilate.fr/sitemap.xml
+Sitemap: https://www.jubilateschool.fr/sitemap.xml

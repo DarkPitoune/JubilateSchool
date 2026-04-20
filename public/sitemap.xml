@@ -3,11 +3,11 @@
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://jubilate.fr/</loc>
+    <loc>https://www.jubilateschool.fr/</loc>
     <lastmod>2026-04-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://jubilate.fr/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://jubilate.fr/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.jubilateschool.fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.jubilateschool.fr/" />
   </url>
 </urlset>
