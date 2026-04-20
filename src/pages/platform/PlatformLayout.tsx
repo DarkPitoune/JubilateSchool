@@ -16,6 +16,8 @@ import {
   useTheme,
   Divider,
   Chip,
+  ThemeProvider,
+  CssBaseline,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -29,6 +31,8 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslator } from "../../components";
+import platformTheme, { palette } from "../../components/platformTheme";
+import "../../components/platform/platform.css";
 import CounterpartClock from "../../components/CounterpartClock";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { useBookingsRealtime } from "../../hooks/useBookingsRealtime";
@@ -51,7 +55,6 @@ const PlatformLayout = () => {
   usePushSubscription(isAdmin ? undefined : profile?.id);
   useBookingsRealtime();
 
-  // Fetch counterpart timezone
   const [counterpartTz, setCounterpartTz] = useState<string | null>(null);
   useEffect(() => {
     if (!profile || (isAdmin && !isImpersonating)) return;
@@ -71,40 +74,20 @@ const PlatformLayout = () => {
   }, [profile, isTeacher, isAdmin, isImpersonating]);
 
   const teacherLinks = [
-    {
-      label: _("nav_dashboard"),
-      path: "/app/dashboard",
-      icon: <DashboardIcon />,
-    },
-    {
-      label: _("nav_availability"),
-      path: "/app/availability",
-      icon: <EventAvailableIcon />,
-    },
+    { label: _("nav_dashboard"), path: "/app/dashboard", icon: <DashboardIcon /> },
+    { label: _("nav_availability"), path: "/app/availability", icon: <EventAvailableIcon /> },
     { label: _("nav_students"), path: "/app/students", icon: <PeopleIcon /> },
     { label: _("nav_bookings"), path: "/app/bookings", icon: <ListAltIcon /> },
   ];
 
   const studentLinks = [
-    {
-      label: _("nav_calendar"),
-      path: "/app/calendar",
-      icon: <CalendarMonthIcon />,
-    },
+    { label: _("nav_calendar"), path: "/app/calendar", icon: <CalendarMonthIcon /> },
     { label: _("nav_bookings"), path: "/app/bookings", icon: <ListAltIcon /> },
   ];
 
   const adminLinks = [
-    {
-      label: _("admin_title"),
-      path: "/app/admin",
-      icon: <AdminPanelSettingsIcon />,
-    },
-    {
-      label: _("nav_accounting"),
-      path: "/app/admin/accounting",
-      icon: <AccountBalanceIcon />,
-    },
+    { label: _("admin_title"), path: "/app/admin", icon: <AdminPanelSettingsIcon /> },
+    { label: _("nav_accounting"), path: "/app/admin/accounting", icon: <AccountBalanceIcon /> },
   ];
 
   const navLinks = isImpersonating
@@ -134,16 +117,23 @@ const PlatformLayout = () => {
 
   const drawerContent = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Toolbar sx={{ bgcolor: "#030340" }}>
-        <img
-          src="/logo.png"
-          alt="logo"
-          style={{ height: "2.5em", cursor: "pointer" }}
+      <Toolbar
+        sx={{
+          bgcolor: palette.ink,
+          minHeight: "64px !important",
+          px: "20px !important",
+        }}
+      >
+        <Box
+          className="platform-logo"
           onClick={() => navigate("/")}
-        />
+          sx={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}
+        >
+          <img src="/logo.png" alt="Jubilate School" style={{ height: "2.8em", display: "block" }} />
+        </Box>
       </Toolbar>
       <Divider />
-      <List sx={{ flex: 1 }}>
+      <List sx={{ flex: 1, py: 1.5 }}>
         {navLinks.map((link) => (
           <ListItemButton
             key={link.path}
@@ -151,7 +141,10 @@ const PlatformLayout = () => {
             onClick={() => handleNav(link.path)}
           >
             <ListItemIcon>{link.icon}</ListItemIcon>
-            <ListItemText primary={link.label} />
+            <ListItemText
+              primary={link.label}
+              primaryTypographyProps={{ fontSize: "0.88rem" }}
+            />
           </ListItemButton>
         ))}
       </List>
@@ -161,26 +154,32 @@ const PlatformLayout = () => {
           <ListItemIcon>
             <HomeIcon />
           </ListItemIcon>
-          <ListItemText primary={_("nav_home")} />
+          <ListItemText
+            primary={_("nav_home")}
+            primaryTypographyProps={{ fontSize: "0.88rem" }}
+          />
         </ListItemButton>
         <ListItemButton onClick={handleSignOut}>
           <ListItemIcon>
             <LogoutIcon />
           </ListItemIcon>
-          <ListItemText primary={_("nav_sign_out")} />
+          <ListItemText
+            primary={_("nav_sign_out")}
+            primaryTypographyProps={{ fontSize: "0.88rem" }}
+          />
         </ListItemButton>
       </List>
-      <Box sx={{ p: 1, textAlign: "center" }}>
+      <Box sx={{ p: 1.5, textAlign: "center" }}>
         <Typography
           variant="caption"
-          sx={{ color: "#999", fontSize: "0.7rem", lineHeight: 1.2 }}
+          sx={{ color: palette.inkFaint, fontSize: "0.7rem", lineHeight: 1.4 }}
         >
           Site développé et maintenu par{" "}
           <a
             href="https://pierre.dhebrail.fr"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: "#666", textDecoration: "underline" }}
+            style={{ color: palette.inkMute, textDecoration: "underline" }}
           >
             Pitoune
           </a>
@@ -190,114 +189,133 @@ const PlatformLayout = () => {
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f5f5f5" }}>
-      {bigScreen ? (
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: DRAWER_WIDTH,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      ) : (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      )}
-
+    <ThemeProvider theme={platformTheme}>
+      <CssBaseline />
       <Box
+        className="platform-root"
         sx={{
-          flex: 1,
           display: "flex",
-          flexDirection: "column",
-          minWidth: 0,
-          overflow: "hidden",
+          minHeight: "100vh",
+          bgcolor: palette.cream,
         }}
       >
-        <AppBar
-          position="sticky"
-          sx={{
-            bgcolor: "#030340",
-            color: "white",
-          }}
-        >
-          <Toolbar>
-            {!bigScreen && (
-              <IconButton
-                color="inherit"
-                edge="start"
-                onClick={() => setMobileOpen(true)}
-                sx={{ mr: 2 }}
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-            <Typography
-              variant="h6"
-              noWrap
-              sx={{ flex: 1, fontFamily: "'Kalam', cursive" }}
-            >
-              Jubilate School
-            </Typography>
-            {counterpartTz && <CounterpartClock timezone={counterpartTz} />}
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              {profile?.first_name}
-            </Typography>
-          </Toolbar>
-        </AppBar>
-
-        {isImpersonating && (
-          <Box
+        {bigScreen ? (
+          <Drawer
+            variant="permanent"
             sx={{
-              bgcolor: "#ed6c02",
-              color: "white",
-              px: 2,
-              py: 0.75,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 2,
+              width: DRAWER_WIDTH,
+              flexShrink: 0,
+              "& .MuiDrawer-paper": {
+                width: DRAWER_WIDTH,
+                boxSizing: "border-box",
+              },
             }}
           >
-            <Typography variant="body2">
-              {_("admin_viewing_as")} <strong>{fullName(profile)}</strong> (
-              {profile?.role})
-            </Typography>
-            <Chip
-              label={_("admin_stop_impersonation")}
-              size="small"
-              onClick={handleStopImpersonating}
-              sx={{
-                bgcolor: "white",
-                color: "#ed6c02",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            />
-          </Box>
+            {drawerContent}
+          </Drawer>
+        ) : (
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            sx={{
+              "& .MuiDrawer-paper": {
+                width: DRAWER_WIDTH,
+                boxSizing: "border-box",
+              },
+            }}
+          >
+            {drawerContent}
+          </Drawer>
         )}
 
-        <Box sx={{ flex: 1, p: { xs: 2.5, sm: 3 }, minWidth: 0 }}>
-          <Outlet />
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minWidth: 0,
+            overflow: "hidden",
+          }}
+        >
+          <AppBar position="sticky">
+            <Toolbar>
+              {!bigScreen && (
+                <IconButton
+                  color="inherit"
+                  edge="start"
+                  onClick={() => setMobileOpen(true)}
+                  sx={{ mr: 2 }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )}
+              <Typography
+                noWrap
+                sx={{
+                  flex: 1,
+                  fontFamily: "'Kalam', cursive",
+                  fontSize: "1.05rem",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                Jubilate School
+              </Typography>
+              {counterpartTz && <CounterpartClock timezone={counterpartTz} />}
+              <Typography
+                variant="body2"
+                sx={{ opacity: 0.75, ml: 1.5, fontSize: "0.82rem" }}
+              >
+                {profile?.first_name}
+              </Typography>
+            </Toolbar>
+          </AppBar>
+
+          {isImpersonating && (
+            <Box
+              sx={{
+                bgcolor: palette.ochre,
+                color: palette.cream,
+                px: 2,
+                py: 0.75,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+              }}
+            >
+              <Typography variant="body2">
+                {_("admin_viewing_as")} <strong>{fullName(profile)}</strong> (
+                {profile?.role})
+              </Typography>
+              <Chip
+                label={_("admin_stop_impersonation")}
+                size="small"
+                onClick={handleStopImpersonating}
+                sx={{
+                  bgcolor: palette.cream,
+                  color: palette.ochre,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontStyle: "normal",
+                }}
+              />
+            </Box>
+          )}
+
+          <Box
+            className="platform-content"
+            sx={{
+              flex: 1,
+              p: { xs: 2.5, sm: 4 },
+              minWidth: 0,
+            }}
+          >
+            <Outlet />
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </ThemeProvider>
   );
 };
 

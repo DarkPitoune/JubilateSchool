@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Box,
-  Typography,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -11,6 +10,7 @@ import {
   Autocomplete,
   TextField,
   CircularProgress,
+  Typography,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -26,12 +26,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
+import { PageTitle } from "../../../components/platform";
+import { palette } from "../../../components/platformTheme";
 import { useLang } from "../../../hooks/useLang";
-import { useTeacherAvailability, useStudentsForPicker } from "../../../hooks/useQueries";
+import {
+  useTeacherAvailability,
+  useStudentsForPicker,
+} from "../../../hooks/useQueries";
 import { fullName } from "../../../types";
 import type { AvailabilitySlot } from "../../../types";
 
-type StudentOption = { id: string; first_name: string; last_name: string; email: string };
+type StudentOption = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+};
 
 const AvailabilityManager = () => {
   const _ = useTranslator();
@@ -61,7 +71,6 @@ const AvailabilityManager = () => {
     queryClient.invalidateQueries({ queryKey: ["availability-slots"] });
   };
 
-  // Floor a date to the whole hour
   const floorToHour = (date: Date): Date => {
     const d = new Date(date);
     d.setMinutes(0, 0, 0);
@@ -70,8 +79,9 @@ const AvailabilityManager = () => {
 
   const handleDateClick = ({ date }: { date: Date }) => {
     const slotTime = floorToHour(date);
-    // If a slot already exists at this time, open remove dialog
-    const existing = slots.find((s) => new Date(s.start_time).getTime() === slotTime.getTime());
+    const existing = slots.find(
+      (s) => new Date(s.start_time).getTime() === slotTime.getTime()
+    );
     if (existing) {
       setSelectedSlot(existing);
       setPendingSlotTime(null);
@@ -119,7 +129,6 @@ const AvailabilityManager = () => {
     }
 
     if (inserted?.reserved_for_student_id) {
-      // Fire-and-forget — do not block UI if email fails
       supabase.functions
         .invoke("send-email", {
           body: { type: "slot_reserved_student", slot_id: inserted.id },
@@ -136,7 +145,9 @@ const AvailabilityManager = () => {
   const handleRemove = async () => {
     if (!selectedSlot) return;
 
-    const hasActiveBooking = bookings.some((b) => b.availability_slot_id === selectedSlot.id);
+    const hasActiveBooking = bookings.some(
+      (b) => b.availability_slot_id === selectedSlot.id
+    );
     if (hasActiveBooking) {
       setError(_("avail_error_delete_has_bookings"));
       return;
@@ -169,50 +180,42 @@ const AvailabilityManager = () => {
     const isReserved = !!reservedStudent;
 
     let title: string;
+    let className: string;
     if (isBooked) {
       title = fullName(booking!.profiles) || _("avail_booking");
+      className =
+        booking!.status === "confirmed"
+          ? "js-slot--teacher-confirmed"
+          : "js-slot--teacher-pending";
     } else if (isReserved) {
       title = `${_("avail_reserved_for")} ${fullName(reservedStudent)}`;
+      className = "js-slot--reserved";
     } else {
       title = _("avail_available");
+      className = "js-slot--available";
     }
-
-    const backgroundColor = isBooked
-      ? booking!.status === "confirmed"
-        ? "#1976d2"
-        : "#ed6c02"
-      : isReserved
-      ? "#9c27b0"
-      : "#4caf50";
-    const borderColor = isBooked
-      ? booking!.status === "confirmed"
-        ? "#1565c0"
-        : "#e65100"
-      : isReserved
-      ? "#7b1fa2"
-      : "#388e3c";
 
     return {
       id: s.id,
       title,
       start: s.start_time,
       end: slotEnd(s.start_time),
-      backgroundColor,
-      borderColor,
+      classNames: [className],
       extendedProps: { type: isBooked ? "booking" : "availability" },
     };
   });
 
-  const dialogSlotTime = selectedSlot ? new Date(selectedSlot.start_time) : pendingSlotTime;
+  const dialogSlotTime = selectedSlot
+    ? new Date(selectedSlot.start_time)
+    : pendingSlotTime;
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3, color: "#030340", fontFamily: "'Kalam', cursive" }}>
-        {_("avail_title")}
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
-        {_("avail_instructions")}
-      </Typography>
+      <PageTitle
+        kicker={_("avail_kicker")}
+        title={_("avail_title")}
+        subtitle={_("avail_subtitle")}
+      />
 
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -222,12 +225,12 @@ const AvailabilityManager = () => {
         <>
           <Box
             sx={{
-              bgcolor: "white",
-              borderRadius: 1,
+              bgcolor: palette.ivory,
+              border: `1px solid ${palette.hairline}`,
+              borderRadius: 2.5,
               p: { xs: 1, sm: 2 },
               overflowX: "auto",
-              "& .fc": { fontFamily: "inherit" },
-              "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 },
+              maxWidth: 1180,
             }}
           >
             <FullCalendar
@@ -235,8 +238,16 @@ const AvailabilityManager = () => {
               initialView={bigScreen ? "timeGridWeek" : "timeGridDay"}
               headerToolbar={
                 bigScreen
-                  ? { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }
-                  : { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek" }
+                  ? {
+                      left: "prev,next today",
+                      center: "title",
+                      right: "dayGridMonth,timeGridWeek,timeGridDay",
+                    }
+                  : {
+                      left: "prev,next",
+                      center: "title",
+                      right: "timeGridDay,timeGridWeek",
+                    }
               }
               locales={[frLocale]}
               locale={lang === "fr" ? "fr" : "en"}
@@ -253,7 +264,12 @@ const AvailabilityManager = () => {
             />
           </Box>
 
-          <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="xs" fullWidth>
+          <Dialog
+            open={dialogOpen}
+            onClose={() => setDialogOpen(false)}
+            maxWidth="xs"
+            fullWidth
+          >
             <DialogTitle>
               {selectedSlot ? _("avail_remove_title") : _("avail_add_title")}
             </DialogTitle>
@@ -264,10 +280,14 @@ const AvailabilityManager = () => {
                 </Alert>
               )}
               {dialogSlotTime && (
-                <Typography sx={{ mt: 1 }}>
+                <Typography sx={{ mt: 1, color: palette.inkSoft }}>
                   {format(dialogSlotTime, "PPPp", { locale })}
                   {" — "}
-                  {format(new Date(dialogSlotTime.getTime() + 60 * 60 * 1000), "p", { locale })}
+                  {format(
+                    new Date(dialogSlotTime.getTime() + 60 * 60 * 1000),
+                    "p",
+                    { locale }
+                  )}
                 </Typography>
               )}
               {!selectedSlot && (
@@ -296,13 +316,24 @@ const AvailabilityManager = () => {
               )}
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setDialogOpen(false)}>{_("cancel")}</Button>
+              <Button variant="outlined" onClick={() => setDialogOpen(false)}>
+                {_("cancel")}
+              </Button>
               {selectedSlot ? (
-                <Button onClick={handleRemove} color="error" variant="contained" disabled={saving}>
+                <Button
+                  onClick={handleRemove}
+                  color="error"
+                  variant="contained"
+                  disabled={saving}
+                >
                   {saving ? _("loading") : _("avail_delete")}
                 </Button>
               ) : (
-                <Button onClick={handleAdd} variant="contained" disabled={saving}>
+                <Button
+                  onClick={handleAdd}
+                  variant="contained"
+                  disabled={saving}
+                >
                   {saving ? _("loading") : _("avail_add_confirm")}
                 </Button>
               )}

@@ -1,7 +1,5 @@
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Grid,
   Chip,
@@ -12,33 +10,23 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Button,
-  type ChipProps,
 } from "@mui/material";
-import PeopleIcon from "@mui/icons-material/People";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import EuroIcon from "@mui/icons-material/Euro";
-import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import PeopleIcon from "@mui/icons-material/PeopleOutline";
+import CheckCircleIcon from "@mui/icons-material/CheckCircleOutline";
+import EuroIcon from "@mui/icons-material/EuroOutlined";
+import PendingActionsIcon from "@mui/icons-material/PendingOutlined";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { useTranslator } from "../../../components";
+import { StatCard, StatusChip } from "../../../components/platform";
+import { palette } from "../../../components/platformTheme";
 import { useLang } from "../../../hooks/useLang";
 import { useAdminDashboard } from "../../../hooks/useQueries";
 import { useAuth } from "../../../contexts/AuthContext";
 import { fullName } from "../../../types";
-import type { BookingStatus } from "../../../types";
-
-const statusColors: Record<BookingStatus, ChipProps["color"]> = {
-  pending_confirmation: "warning",
-  confirmed: "success",
-  rejected: "error",
-  expired: "default",
-  payment_failed: "error",
-  cancelled_by_student: "default",
-  cancelled_by_teacher: "default",
-};
 
 const AdminOverview = () => {
   const _ = useTranslator();
@@ -48,7 +36,9 @@ const AdminOverview = () => {
   const { impersonate } = useAuth();
   const { data, isLoading } = useAdminDashboard();
 
-  const handleImpersonate = (profile: NonNullable<typeof data>["profiles"][number]) => {
+  const handleImpersonate = (
+    profile: NonNullable<typeof data>["profiles"][number]
+  ) => {
     impersonate(profile);
     const dest = profile.role === "teacher" ? "/app/dashboard" : "/app/calendar";
     navigate(dest);
@@ -62,102 +52,78 @@ const AdminOverview = () => {
     );
   }
 
+  const pendingCount = data?.pendingCount ?? 0;
+
   return (
     <>
-      {/* Stats cards */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 5, maxWidth: 1100 }}>
         <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <PeopleIcon sx={{ fontSize: 40, color: "#030340" }} />
-              <Box>
-                <Typography variant="h4" sx={{ color: "#030340" }}>
-                  {data?.studentCount ?? 0}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#666" }}>
-                  {_("admin_total_students")}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            label={_("admin_total_students")}
+            value={data?.studentCount ?? 0}
+            icon={<PeopleIcon />}
+          />
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <CheckCircleIcon sx={{ fontSize: 40, color: "#2e7d32" }} />
-              <Box>
-                <Typography variant="h4" sx={{ color: "#030340" }}>
-                  {data?.confirmedCount ?? 0}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#666" }}>
-                  {_("admin_confirmed_bookings")}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            label={_("admin_confirmed_bookings")}
+            value={data?.confirmedCount ?? 0}
+            icon={<CheckCircleIcon />}
+          />
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <EuroIcon sx={{ fontSize: 40, color: "#030340" }} />
-              <Box>
-                <Typography variant="h4" sx={{ color: "#030340" }}>
-                  {((data?.revenueCents ?? 0) / 100).toFixed(0)}€
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#666" }}>
-                  {_("admin_revenue")}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            label={_("admin_revenue")}
+            value={Math.round((data?.revenueCents ?? 0) / 100).toLocaleString(
+              lang === "fr" ? "fr-FR" : "en-US"
+            )}
+            unit="€"
+            icon={<EuroIcon />}
+          />
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <PendingActionsIcon sx={{ fontSize: 40, color: "#ed6c02" }} />
-              <Box>
-                <Typography variant="h4" sx={{ color: "#030340" }}>
-                  {data?.pendingCount ?? 0}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#666" }}>
-                  {_("admin_pending")}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            label={_("admin_pending")}
+            value={pendingCount}
+            icon={<PendingActionsIcon />}
+            pulse={pendingCount > 0}
+          />
         </Grid>
       </Grid>
 
-      {/* Recent bookings */}
-      <Typography variant="h5" sx={{ mb: 2, color: "#030340" }}>
-        {_("admin_recent_bookings")}
-      </Typography>
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
+      <SectionHeading title={_("admin_recent_bookings")} />
+      <TableContainer sx={{ mb: 5, maxWidth: 1100 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>{_("bookings_student")}</TableCell>
               <TableCell>{_("bookings_date")}</TableCell>
               <TableCell>{_("bookings_duration_col")}</TableCell>
-              <TableCell>{_("bookings_price")}</TableCell>
-              <TableCell>{_("bookings_status")}</TableCell>
+              <TableCell align="right">{_("bookings_price")}</TableCell>
+              <TableCell align="right">{_("bookings_status")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {(data?.recentBookings ?? []).map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell>{fullName(booking.profiles)}</TableCell>
-                <TableCell>
+              <TableRow key={booking.id} hover>
+                <TableCell sx={{ fontWeight: 500 }}>
+                  {fullName(booking.profiles)}
+                </TableCell>
+                <TableCell sx={{ color: palette.inkMute }}>
                   {format(new Date(booking.start_time), "PPp", { locale })}
                 </TableCell>
-                <TableCell>1h</TableCell>
-                <TableCell>{(booking.price_cents / 100).toFixed(2)}€</TableCell>
-                <TableCell>
-                  <Chip
-                    label={_(`status_${booking.status}`)}
-                    color={statusColors[booking.status]}
-                    size="small"
-                  />
+                <TableCell sx={{ color: palette.inkMute }}>1h</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{
+                    fontVariantNumeric: "tabular-nums",
+                    fontWeight: 500,
+                  }}
+                >
+                  {(booking.price_cents / 100).toFixed(2)}&nbsp;€
+                </TableCell>
+                <TableCell align="right">
+                  <StatusChip status={booking.status} />
                 </TableCell>
               </TableRow>
             ))}
@@ -165,38 +131,54 @@ const AdminOverview = () => {
         </Table>
       </TableContainer>
 
-      {/* Users list */}
-      <Typography variant="h5" sx={{ mb: 2, color: "#030340" }}>
-        {_("admin_users")}
-      </Typography>
-      <TableContainer component={Paper}>
+      <SectionHeading title={_("admin_users")} />
+      <TableContainer sx={{ maxWidth: 1100 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>{_("first_name")} {_("last_name")}</TableCell>
+              <TableCell>
+                {_("first_name")} {_("last_name")}
+              </TableCell>
               <TableCell>{_("email")}</TableCell>
               <TableCell>Role</TableCell>
-              <TableCell>{_("bookings_actions")}</TableCell>
+              <TableCell align="right">{_("bookings_actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {(data?.profiles ?? [])
               .filter((p) => p.role !== "admin")
               .map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>{fullName(p)}</TableCell>
-                  <TableCell>{p.email}</TableCell>
+                <TableRow key={p.id} hover>
+                  <TableCell sx={{ fontWeight: 500 }}>{fullName(p)}</TableCell>
+                  <TableCell
+                    sx={{ color: palette.inkSoft, fontSize: "0.82rem" }}
+                  >
+                    {p.email}
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={p.role}
+                      variant="outlined"
                       size="small"
-                      color={p.role === "teacher" ? "primary" : "default"}
+                      sx={{
+                        fontFamily: "'Fraunces', Georgia, serif",
+                        fontSize: "0.72rem",
+                        letterSpacing: "0.06em",
+                        fontStyle: "normal",
+                        color:
+                          p.role === "teacher" ? palette.ink : palette.inkMute,
+                        borderColor:
+                          p.role === "teacher"
+                            ? palette.ink
+                            : palette.hairlineStrong,
+                      }}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell align="right">
                     <Button
                       size="small"
                       variant="outlined"
+                      endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
                       onClick={() => handleImpersonate(p)}
                     >
                       {_("admin_impersonate")}
@@ -210,5 +192,21 @@ const AdminOverview = () => {
     </>
   );
 };
+
+const SectionHeading = ({ title }: { title: string }) => (
+  <Typography
+    variant="h5"
+    sx={{
+      mb: 2,
+      maxWidth: 1100,
+      fontFamily: "'Fraunces', Georgia, serif",
+      fontVariationSettings: "'opsz' 72",
+      fontSize: "1.35rem",
+      color: palette.ink,
+    }}
+  >
+    {title}
+  </Typography>
+);
 
 export default AdminOverview;

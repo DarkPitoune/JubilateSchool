@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Jubilate School (mock)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..800,0..100;1,9..144,300..800,0..100&family=Public+Sans:ital,wght@0,300..800;1,300..800&family=Kalam:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1A1F3E;
+      --ink-soft: #3B4160;
+      --ink-mute: #6D7189;
+      --ink-faint: #A0A3B6;
+      --cream: #FAF7F2;
+      --cream-deep: #F2EDE3;
+      --ivory: #FBF9F5;
+      --hairline: #E5E0D5;
+      --hairline-strong: #D3CCBB;
+      --accent: #C86A4D;
+      --accent-soft: rgba(200, 106, 77, 0.10);
+      --sage: #6B8E5A;
+      --sage-soft: rgba(107, 142, 90, 0.10);
+      --brick: #B8594D;
+      --brick-soft: rgba(184, 89, 77, 0.10);
+      --ochre: #B8903A;
+      --ochre-soft: rgba(212, 168, 74, 0.12);
+      --shadow-lift: 0 1px 0 rgba(26, 31, 62, 0.04);
+      --font-display: 'Fraunces', 'Iowan Old Style', 'Georgia', serif;
+      --font-body: 'Public Sans', -apple-system, system-ui, sans-serif;
+      --font-hand: 'Kalam', cursive;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--ink);
+      background: var(--cream);
+      font-size: 15px;
+      line-height: 1.5;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Layout */
+    .app { display: flex; min-height: 100vh; }
+
+    /* Drawer */
+    .drawer {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--ivory);
+      border-right: 1px solid var(--hairline);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .drawer__brand {
+      height: 64px;
+      background: var(--ink);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 10px;
+    }
+    .drawer__logo {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--cream);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 18px;
+      transition: transform 250ms ease;
+      cursor: pointer;
+    }
+    .drawer__logo:hover { transform: rotate(-2deg); } /* playful moment 1 */
+    .drawer__brand-text {
+      font-family: var(--font-hand);
+      color: var(--cream);
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+
+    .drawer__nav {
+      flex: 1;
+      padding: 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--ink-soft);
+      font-size: 14px;
+      font-weight: 500;
+      position: relative;
+      transition: background 140ms ease, color 140ms ease;
+    }
+    .nav-item:hover { background: var(--cream-deep); color: var(--ink); }
+    .nav-item[data-active="true"] {
+      color: var(--ink);
+      background: transparent;
+    }
+    .nav-item[data-active="true"]::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .nav-item svg { width: 18px; height: 18px; stroke-width: 1.6; }
+
+    .drawer__foot {
+      border-top: 1px solid var(--hairline);
+      padding: 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .drawer__credit {
+      padding: 10px 14px;
+      font-size: 11px;
+      color: var(--ink-faint);
+      text-align: center;
+      line-height: 1.4;
+    }
+    .drawer__credit a { color: var(--ink-mute); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* Main */
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .appbar {
+      height: 64px;
+      background: var(--ink);
+      color: var(--cream);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .appbar__title {
+      flex: 1;
+      font-family: var(--font-hand);
+      font-size: 18px;
+    }
+    .appbar__clock {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid rgba(250, 247, 242, 0.18);
+      font-size: 12px;
+      color: rgba(250, 247, 242, 0.78);
+      font-variant-numeric: tabular-nums;
+    }
+    .appbar__clock .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--sage); }
+    .appbar__user { font-size: 13px; color: rgba(250, 247, 242, 0.75); }
+
+    /* Content */
+    .content {
+      flex: 1;
+      padding: 40px 48px 64px;
+      background-color: var(--cream);
+      background-image: radial-gradient(rgba(26, 31, 62, 0.09) 0.7px, transparent 0.7px);
+      background-size: 26px 26px;
+      background-position: 0 0;
+      position: relative;
+    }
+    .content > * { position: relative; z-index: 1; }
+
+    /* Page title */
+    .page-head { margin-bottom: 36px; max-width: 1100px; }
+    .page-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-variation-settings: "opsz" 144, "SOFT" 30;
+      font-size: 44px;
+      line-height: 1.05;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin: 0 0 6px;
+      position: relative;
+      display: inline-block;
+    }
+    .page-title .underline {
+      position: absolute;
+      left: 0;
+      bottom: -8px;
+      width: 64%;
+      height: 10px;
+      pointer-events: none;
+    }
+    .page-kicker {
+      font-family: var(--font-body);
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .page-sub {
+      font-family: var(--font-body);
+      color: var(--ink-mute);
+      font-size: 15px;
+      margin: 10px 0 0;
+    }
+
+    /* Stats grid */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+      max-width: 1100px;
+    }
+    .stat {
+      background: var(--ivory);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      padding: 22px 22px 20px;
+      position: relative;
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+      cursor: default;
+    }
+    .stat:hover { /* playful moment 2 */
+      transform: translateY(-1px);
+      border-color: var(--hairline-strong);
+      box-shadow: var(--shadow-lift);
+    }
+    .stat__icon {
+      position: absolute;
+      top: 18px; right: 18px;
+      color: var(--ink-faint);
+    }
+    .stat__icon svg { width: 18px; height: 18px; stroke-width: 1.4; }
+    .stat__label {
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-mute);
+      font-weight: 500;
+      margin-bottom: 14px;
+    }
+    .stat__value {
+      font-family: var(--font-display);
+      font-variation-settings: "opsz" 144, "SOFT" 30;
+      font-weight: 400;
+      font-size: 46px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .stat__unit {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--ink-mute);
+      font-weight: 300;
+    }
+    .stat__delta {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--ink-mute);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stat__delta .chip-delta {
+      color: var(--sage);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Pending — playful moment 3: pulsing accent dot */
+    .stat--pending .stat__value { color: var(--ink); }
+    .pulse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
+      position: relative;
+      margin-left: 6px;
+      vertical-align: middle;
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    .pulse-dot::after {
+      content: '';
+      position: absolute; inset: -4px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.22;
+      animation: pulseRing 2.2s ease-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.75; }
+      50% { opacity: 1; }
+    }
+    @keyframes pulseRing {
+      0% { transform: scale(0.8); opacity: 0.25; }
+      70% { transform: scale(1.8); opacity: 0; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    /* Section heading */
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      max-width: 1100px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-variation-settings: "opsz" 72, "SOFT" 20;
+      font-weight: 400;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      margin: 0;
+    }
+    .section-meta {
+      font-size: 12px;
+      color: var(--ink-mute);
+      letter-spacing: 0.06em;
+    }
+
+    /* Tables */
+    .card-table {
+      background: var(--ivory);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 40px;
+      max-width: 1100px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-mute);
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--hairline);
+      background: var(--cream-deep);
+    }
+    thead th.right, tbody td.right { text-align: right; }
+    tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--hairline);
+      color: var(--ink);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 120ms ease; }
+    tbody tr:hover { background: var(--cream); }
+    .cell-name { font-weight: 500; }
+    .cell-mute { color: var(--ink-mute); font-size: 13px; }
+    .cell-price { font-variant-numeric: tabular-nums; font-weight: 500; }
+    .cell-email { color: var(--ink-soft); font-size: 13px; }
+
+    /* Chips */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      line-height: 1.4;
+      border: 1px solid;
+    }
+    .chip--confirmed {
+      color: var(--sage);
+      background: var(--sage-soft);
+      border-color: rgba(107, 142, 90, 0.35);
+      transform: rotate(-0.5deg); /* playful moment 4: stamped */
+    }
+    .chip--pending {
+      color: var(--ochre);
+      background: var(--ochre-soft);
+      border-color: rgba(184, 144, 58, 0.35);
+    }
+    .chip--rejected {
+      color: var(--brick);
+      background: var(--brick-soft);
+      border-color: rgba(184, 89, 77, 0.35);
+    }
+    .chip--cancelled {
+      color: var(--ink-mute);
+      background: transparent;
+      border-color: var(--hairline-strong);
+    }
+    .chip--role-teacher {
+      color: var(--ink);
+      background: transparent;
+      border-color: var(--ink);
+      font-style: normal;
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+    }
+    .chip--role-student {
+      color: var(--ink-mute);
+      background: transparent;
+      border-color: var(--hairline-strong);
+      font-style: normal;
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+      transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: var(--ink); color: var(--cream); }
+    .btn:active { transform: translateY(1px); }
+    .btn--ghost {
+      border-color: var(--hairline-strong);
+      color: var(--ink-soft);
+    }
+    .btn--ghost:hover {
+      border-color: var(--ink);
+      background: transparent;
+      color: var(--ink);
+    }
+    .btn--primary {
+      background: var(--ink);
+      color: var(--cream);
+    }
+    .btn--primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .btn .arrow { transition: transform 140ms ease; }
+    .btn:hover .arrow { transform: translateX(2px); }
+
+    /* Snackbar preview — playful moment 5 */
+    .snackbar {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--ivory);
+      border: 1px solid var(--hairline);
+      border-left: 3px solid var(--sage);
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 6px 20px rgba(26, 31, 62, 0.08);
+      z-index: 10;
+      font-size: 13px;
+      color: var(--ink);
+    }
+    .snackbar svg path {
+      fill: none;
+      stroke: var(--sage);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 40;
+      stroke-dashoffset: 40;
+      animation: drawCheck 420ms ease forwards 300ms;
+    }
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* Responsive — quick compress for preview */
+    @media (max-width: 1100px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .content { padding: 32px 32px 48px; }
+    }
+
+    /* Small design note banner at the top */
+    .mock-note {
+      position: fixed;
+      top: 10px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26, 31, 62, 0.92);
+      color: var(--cream);
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 100px;
+      letter-spacing: 0.06em;
+      z-index: 20;
+      font-family: var(--font-body);
+      backdrop-filter: blur(4px);
+    }
+    .mock-note strong { font-weight: 600; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="mock-note">design mock · <strong>cahier raffiné</strong> · admin view</div>
+
+  <div class="app">
+    <!-- DRAWER -->
+    <aside class="drawer">
+      <div class="drawer__brand">
+        <div class="drawer__logo" title="hover me">JS</div>
+        <div class="drawer__brand-text">Jubilate School</div>
+      </div>
+
+      <nav class="drawer__nav">
+        <div class="nav-item" data-active="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12l2-2 7-7 7 7 2 2"/><path d="M5 10v10h14V10"/></svg>
+          Administration
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          Comptabilité
+        </div>
+
+        <div style="height: 16px"></div>
+
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2V10z"/></svg>
+          Accueil
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/><path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8"/></svg>
+          Se déconnecter
+        </div>
+      </nav>
+
+      <div class="drawer__foot">
+        <div class="drawer__credit">
+          Site développé et maintenu par <a href="#">Pitoune</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="appbar">
+        <div class="appbar__title">Jubilate School</div>
+        <div class="appbar__clock"><span class="dot"></span>Paris · 14:42</div>
+        <div class="appbar__user">Pierre</div>
+      </div>
+
+      <div class="content">
+
+        <div class="page-head">
+          <div class="page-kicker">Tableau de bord</div>
+          <h1 class="page-title">
+            Administration
+            <svg class="underline" viewBox="0 0 260 10" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M2 6 Q 60 2, 130 5 T 258 4" fill="none" stroke="#C86A4D" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>
+            </svg>
+          </h1>
+          <p class="page-sub">Vue d'ensemble de la plateforme — élèves, réservations, chiffre d'affaires.</p>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats">
+          <div class="stat">
+            <div class="stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="17" cy="7" r="3"/><path d="M21 21v-2a3 3 0 0 0-2-2.83"/></svg></div>
+            <div class="stat__label">Élèves</div>
+            <div class="stat__value">24</div>
+            <div class="stat__delta"><span class="chip-delta">+3</span> ce mois-ci</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg></div>
+            <div class="stat__label">Cours confirmés</div>
+            <div class="stat__value">142</div>
+            <div class="stat__delta"><span class="chip-delta">+18</span> ce mois-ci</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 10h10a4 4 0 0 1 0 8H6"/><path d="M4 14h10"/><path d="M8 6v12"/></svg></div>
+            <div class="stat__label">Chiffre d'affaires</div>
+            <div class="stat__value">4&nbsp;860<span class="stat__unit">€</span></div>
+            <div class="stat__delta"><span class="chip-delta">+620 €</span> ce mois-ci</div>
+          </div>
+
+          <div class="stat stat--pending">
+            <div class="stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div class="stat__label">En attente</div>
+            <div class="stat__value">3<span class="pulse-dot"></span></div>
+            <div class="stat__delta">à confirmer sous 48h</div>
+          </div>
+        </div>
+
+        <!-- RECENT BOOKINGS -->
+        <div class="section-head">
+          <h2 class="section-title">Dernières réservations</h2>
+          <div class="section-meta">7 derniers jours</div>
+        </div>
+
+        <div class="card-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Élève</th>
+                <th>Date</th>
+                <th>Durée</th>
+                <th class="right">Prix</th>
+                <th class="right">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="cell-name">Camille Rousseau</td>
+                <td class="cell-mute">jeu. 24 avril, 17:00</td>
+                <td class="cell-mute">1h</td>
+                <td class="right cell-price">45,00 €</td>
+                <td class="right"><span class="chip chip--confirmed">confirmé</span></td>
+              </tr>
+              <tr>
+                <td class="cell-name">Antoine Vasseur</td>
+                <td class="cell-mute">jeu. 24 avril, 18:30</td>
+                <td class="cell-mute">1h</td>
+                <td class="right cell-price">45,00 €</td>
+                <td class="right"><span class="chip chip--pending">à confirmer</span></td>
+              </tr>
+              <tr>
+                <td class="cell-name">Léa Moreau</td>
+                <td class="cell-mute">mer. 23 avril, 16:00</td>
+                <td class="cell-mute">1h</td>
+                <td class="right cell-price">45,00 €</td>
+                <td class="right"><span class="chip chip--confirmed">confirmé</span></td>
+              </tr>
+              <tr>
+                <td class="cell-name">Hugo Lefèvre</td>
+                <td class="cell-mute">mar. 22 avril, 19:00</td>
+                <td class="cell-mute">1h</td>
+                <td class="right cell-price">40,00 €</td>
+                <td class="right"><span class="chip chip--rejected">refusé</span></td>
+              </tr>
+              <tr>
+                <td class="cell-name">Sophie Nguyen</td>
+                <td class="cell-mute">mar. 22 avril, 17:00</td>
+                <td class="cell-mute">1h</td>
+                <td class="right cell-price">45,00 €</td>
+                <td class="right"><span class="chip chip--confirmed">confirmé</span></td>
+              </tr>
+              <tr>
+                <td class="cell-name">Mathis Bernard</td>
+                <td class="cell-mute">lun. 21 avril, 18:00</td>
+                <td class="cell-mute">1h</td>
+                <td class="right cell-price">45,00 €</td>
+                <td class="right"><span class="chip chip--cancelled">annulé</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- USERS -->
+        <div class="section-head">
+          <h2 class="section-title">Utilisateurs</h2>
+          <div class="section-meta">26 comptes</div>
+        </div>
+
+        <div class="card-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th class="right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="cell-name">Isabelle d'Hébrail</td>
+                <td class="cell-email">isabelle@jubilate.fr</td>
+                <td><span class="chip chip--role-teacher">enseignante</span></td>
+                <td class="right">
+                  <button class="btn btn--ghost">
+                    Se connecter en tant que
+                    <span class="arrow">→</span>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name">Camille Rousseau</td>
+                <td class="cell-email">camille.rousseau@gmail.com</td>
+                <td><span class="chip chip--role-student">élève</span></td>
+                <td class="right">
+                  <button class="btn btn--ghost">
+                    Se connecter en tant que
+                    <span class="arrow">→</span>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name">Antoine Vasseur</td>
+                <td class="cell-email">a.vasseur@icloud.com</td>
+                <td><span class="chip chip--role-student">élève</span></td>
+                <td class="right">
+                  <button class="btn btn--ghost">
+                    Se connecter en tant que
+                    <span class="arrow">→</span>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name">Léa Moreau</td>
+                <td class="cell-email">lea.moreau@outlook.fr</td>
+                <td><span class="chip chip--role-student">élève</span></td>
+                <td class="right">
+                  <button class="btn btn--ghost">
+                    Se connecter en tant que
+                    <span class="arrow">→</span>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name">Hugo Lefèvre</td>
+                <td class="cell-email">hugo.lefevre@gmail.com</td>
+                <td><span class="chip chip--role-student">élève</span></td>
+                <td class="right">
+                  <button class="btn btn--ghost">
+                    Se connecter en tant que
+                    <span class="arrow">→</span>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name">Sophie Nguyen</td>
+                <td class="cell-email">s.nguyen@proton.me</td>
+                <td><span class="chip chip--role-student">élève</span></td>
+                <td class="right">
+                  <button class="btn btn--ghost">
+                    Se connecter en tant que
+                    <span class="arrow">→</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- snackbar preview (playful moment 5) -->
+  <div class="snackbar">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 12.5 L10 18 L20 6"/>
+    </svg>
+    Tarif enregistré
+  </div>
+</body>
+</html>

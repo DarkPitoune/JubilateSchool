@@ -10,10 +10,12 @@ import {
   Alert,
   Box,
 } from "@mui/material";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { supabase } from "../../../lib/supabase";
 import { useTranslator } from "../../../components";
+import { palette } from "../../../components/platformTheme";
 import { useLang } from "../../../hooks/useLang";
 import { useCounterpartTz } from "../../../hooks/useCounterpartTz";
 import { formatCounterpartHint } from "../../../lib/timezone";
@@ -28,7 +30,14 @@ interface BookingDialogProps {
   onBooked: () => void;
 }
 
-const BookingDialog = ({ open, onClose, slot, pricing, couponUsed, onBooked }: BookingDialogProps) => {
+const BookingDialog = ({
+  open,
+  onClose,
+  slot,
+  pricing,
+  couponUsed,
+  onBooked,
+}: BookingDialogProps) => {
   const _ = useTranslator();
   const lang = useLang();
   const locale = lang === "en" ? enUS : fr;
@@ -45,12 +54,11 @@ const BookingDialog = ({ open, onClose, slot, pricing, couponUsed, onBooked }: B
     [slotStart]
   );
 
-  const formatPrice = (cents: number) => {
-    return new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-US", {
+  const formatPrice = (cents: number) =>
+    new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
       currency: pricing?.currency || "eur",
     }).format(cents / 100);
-  };
 
   const handleSubmit = async () => {
     setError("");
@@ -70,22 +78,21 @@ const BookingDialog = ({ open, onClose, slot, pricing, couponUsed, onBooked }: B
 
     if (fnError || data?.error) {
       const errKey = data?.error;
-      const translated = errKey === "coupon_invalid" || errKey === "coupon_already_used"
-        ? _(errKey)
-        : errKey || _("booking_error_generic");
+      const translated =
+        errKey === "coupon_invalid" || errKey === "coupon_already_used"
+          ? _(errKey)
+          : errKey || _("booking_error_generic");
       setError(translated);
       setLoading(false);
       return;
     }
 
-    // Free session: no Stripe redirect
     if (data?.free) {
       onBooked();
       handleClose();
       return;
     }
 
-    // Redirect to Stripe Checkout
     if (data?.url) {
       globalThis.location.href = data.url;
     }
@@ -115,13 +122,16 @@ const BookingDialog = ({ open, onClose, slot, pricing, couponUsed, onBooked }: B
           </Alert>
         )}
 
-        <Typography variant="body2" sx={{ mb: 0.5, color: "#666" }}>
+        <Typography variant="body2" sx={{ color: palette.inkSoft, mb: 0.5 }}>
           {format(new Date(slotStart), "PPPp", { locale })}
           {" — "}
           {format(new Date(slotEnd), "p", { locale })}
         </Typography>
         {teacherTz && (
-          <Typography variant="caption" sx={{ mb: 2, display: "block", color: "#999" }}>
+          <Typography
+            variant="caption"
+            sx={{ mb: 2, display: "block", color: palette.inkFaint }}
+          >
             {formatCounterpartHint(slotStart, teacherTz, lang, locale)}
             {" — "}
             {formatCounterpartHint(slotEnd, teacherTz, lang, locale)}
@@ -152,38 +162,71 @@ const BookingDialog = ({ open, onClose, slot, pricing, couponUsed, onBooked }: B
 
         <Box
           sx={{
-            bgcolor: "#f5f5f5",
-            borderRadius: 1,
-            p: 2,
-            textAlign: "center",
+            mt: 1,
+            pt: 1.75,
+            borderTop: `1px dashed ${palette.hairlineStrong}`,
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 2,
           }}
         >
-          <Typography variant="h5" sx={{ color: "#030340" }}>
+          <Box
+            sx={{
+              fontSize: "0.72rem",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: palette.inkMute,
+              fontWeight: 500,
+            }}
+          >
+            {pricing.hourly_rate_cents === 0
+              ? _("booking_free")
+              : _("booking_total") || _("bookings_price")}
+          </Box>
+          <Typography
+            sx={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontVariationSettings: "'opsz' 96",
+              fontWeight: 400,
+              fontSize: "1.75rem",
+              letterSpacing: "-0.01em",
+              color: palette.ink,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {pricing.hourly_rate_cents === 0
               ? _("booking_free")
               : formatPrice(pricing.hourly_rate_cents)}
           </Typography>
-          {pricing.hourly_rate_cents !== 0 && (
-            <Typography variant="body2" sx={{ color: "#666" }}>
-              {formatPrice(pricing.hourly_rate_cents)} / h
-            </Typography>
-          )}
         </Box>
       </DialogContent>
-      <DialogActions sx={{ flexDirection: "column", alignItems: "stretch", gap: 0.5 }}>
+      <DialogActions
+        sx={{ flexDirection: "column", alignItems: "stretch", gap: 0.75 }}
+      >
         {loading && pricing.hourly_rate_cents !== 0 && (
-          <Typography variant="caption" sx={{ color: "#999", textAlign: "center" }}>
+          <Typography
+            variant="caption"
+            sx={{ color: palette.inkFaint, textAlign: "center" }}
+          >
             {_("booking_redirecting_stripe")}
           </Typography>
         )}
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-          <Button onClick={handleClose}>{_("cancel")}</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={loading}>
+          <Button variant="outlined" onClick={handleClose}>
+            {_("cancel")}
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
+            disabled={loading}
+          >
             {loading
               ? _("loading")
               : pricing.hourly_rate_cents === 0
-              ? _("booking_proceed_free")
-              : _("booking_proceed_payment")}
+                ? _("booking_proceed_free")
+                : _("booking_proceed_payment")}
           </Button>
         </Box>
       </DialogActions>

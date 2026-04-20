@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mon calendrier — Jubilate School (mock)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..800,0..100;1,9..144,300..800,0..100&family=Public+Sans:ital,wght@0,300..800;1,300..800&family=Kalam:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1A1F3E;
+      --ink-soft: #3B4160;
+      --ink-mute: #6D7189;
+      --ink-faint: #A0A3B6;
+      --cream: #FAF7F2;
+      --cream-deep: #F2EDE3;
+      --ivory: #FBF9F5;
+      --hairline: #E5E0D5;
+      --hairline-strong: #D3CCBB;
+      --accent: #C86A4D;
+      --accent-soft: rgba(200, 106, 77, 0.12);
+      --accent-softer: rgba(200, 106, 77, 0.06);
+      --sage: #6B8E5A;
+      --sage-soft: rgba(107, 142, 90, 0.14);
+      --brick: #B8594D;
+      --ochre: #B8903A;
+      --shadow-lift: 0 1px 0 rgba(26, 31, 62, 0.04);
+      --shadow-float: 0 12px 40px rgba(26, 31, 62, 0.14), 0 2px 6px rgba(26, 31, 62, 0.06);
+      --font-display: 'Fraunces', 'Iowan Old Style', 'Georgia', serif;
+      --font-body: 'Public Sans', -apple-system, system-ui, sans-serif;
+      --font-hand: 'Kalam', cursive;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--ink);
+      background: var(--cream);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .app { display: flex; min-height: 100vh; }
+
+    /* Drawer */
+    .drawer {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--ivory);
+      border-right: 1px solid var(--hairline);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .drawer__brand {
+      height: 64px;
+      background: var(--ink);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 10px;
+    }
+    .drawer__logo {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--cream);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 18px;
+      transition: transform 250ms ease;
+      cursor: pointer;
+    }
+    .drawer__logo:hover { transform: rotate(-2deg); }
+    .drawer__brand-text {
+      font-family: var(--font-hand);
+      color: var(--cream);
+      font-size: 18px;
+    }
+
+    .drawer__nav {
+      flex: 1;
+      padding: 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--ink-soft);
+      font-size: 14px;
+      font-weight: 500;
+      position: relative;
+      transition: background 140ms ease, color 140ms ease;
+    }
+    .nav-item:hover { background: var(--cream-deep); color: var(--ink); }
+    .nav-item[data-active="true"] { color: var(--ink); }
+    .nav-item[data-active="true"]::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .nav-item svg { width: 18px; height: 18px; stroke-width: 1.6; }
+
+    .drawer__foot {
+      border-top: 1px solid var(--hairline);
+      padding: 14px 8px;
+    }
+    .drawer__credit {
+      padding: 10px 14px;
+      font-size: 11px;
+      color: var(--ink-faint);
+      text-align: center;
+      line-height: 1.4;
+    }
+    .drawer__credit a { color: var(--ink-mute); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* Main */
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .appbar {
+      height: 64px;
+      background: var(--ink);
+      color: var(--cream);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .appbar__title {
+      flex: 1;
+      font-family: var(--font-hand);
+      font-size: 18px;
+    }
+    .appbar__clock {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid rgba(250, 247, 242, 0.18);
+      font-size: 12px;
+      color: rgba(250, 247, 242, 0.78);
+      font-variant-numeric: tabular-nums;
+    }
+    .appbar__clock .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--sage); }
+    .appbar__user { font-size: 13px; color: rgba(250, 247, 242, 0.75); }
+
+    /* Content */
+    .content {
+      flex: 1;
+      padding: 40px 48px 64px;
+      background-color: var(--cream);
+      background-image: radial-gradient(rgba(26, 31, 62, 0.09) 0.7px, transparent 0.7px);
+      background-size: 26px 26px;
+      position: relative;
+    }
+    .content > * { position: relative; z-index: 1; }
+
+    /* Page head */
+    .page-head { margin-bottom: 24px; max-width: 1180px; }
+    .page-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-variation-settings: "opsz" 144, "SOFT" 30;
+      font-size: 44px;
+      line-height: 1.05;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin: 0 0 6px;
+      position: relative;
+      display: inline-block;
+    }
+    .page-title .underline {
+      position: absolute;
+      left: 0;
+      bottom: -8px;
+      width: 64%;
+      height: 10px;
+      pointer-events: none;
+    }
+    .page-kicker {
+      font-family: var(--font-body);
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .page-sub {
+      color: var(--ink-mute);
+      font-size: 15px;
+      margin: 10px 0 0;
+      max-width: 640px;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 1180px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar__left, .toolbar__right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .week-label {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 400;
+      font-variation-settings: "opsz" 72;
+      letter-spacing: -0.005em;
+      color: var(--ink);
+      min-width: 200px;
+    }
+    .week-label em {
+      font-style: italic;
+      color: var(--ink-mute);
+      font-size: 14px;
+      font-weight: 400;
+      display: block;
+      margin-top: 2px;
+    }
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--hairline-strong);
+      background: var(--ivory);
+      color: var(--ink-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 140ms, color 140ms, background 140ms;
+    }
+    .icon-btn:hover { border-color: var(--ink); color: var(--ink); }
+    .icon-btn svg { width: 16px; height: 16px; stroke-width: 1.8; }
+
+    /* Legend + price */
+    .subbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      max-width: 1180px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .legend {
+      display: flex;
+      gap: 18px;
+      font-size: 12px;
+      color: var(--ink-mute);
+      align-items: center;
+    }
+    .legend__item { display: inline-flex; align-items: center; gap: 8px; }
+    .swatch {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .swatch--available {
+      background: var(--ivory);
+      border: 1.5px dashed var(--ink);
+    }
+    .swatch--reserved { background: var(--accent); border: 1px solid var(--accent); }
+    .swatch--mine { background: var(--sage); border: 1px solid var(--sage); }
+    .swatch--booked {
+      background: repeating-linear-gradient(-45deg, var(--hairline) 0, var(--hairline) 3px, var(--cream-deep) 3px, var(--cream-deep) 6px);
+      border: 1px solid var(--hairline-strong);
+    }
+
+    .price-note {
+      font-size: 13px;
+      color: var(--ink-mute);
+      font-style: italic;
+    }
+    .price-note strong {
+      font-style: normal;
+      font-family: var(--font-display);
+      color: var(--ink);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Calendar */
+    .calendar {
+      background: var(--ivory);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      overflow: hidden;
+      max-width: 1180px;
+    }
+    .cal-head {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      border-bottom: 1px solid var(--hairline);
+      background: var(--cream-deep);
+    }
+    .cal-head > div {
+      padding: 12px 10px;
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-mute);
+      text-align: center;
+      font-weight: 500;
+      border-right: 1px solid var(--hairline);
+    }
+    .cal-head > div:last-child { border-right: none; }
+    .cal-head .day-num {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-variation-settings: "opsz" 72;
+      font-weight: 400;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      text-transform: none;
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .cal-head .today .day-num { color: var(--accent); }
+    .cal-head .today .day-num::after {
+      content: '·';
+      color: var(--accent);
+      margin-left: 2px;
+    }
+
+    .cal-body {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      position: relative;
+    }
+    .hours {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--hairline);
+    }
+    .hour-label {
+      height: 60px;
+      padding: 4px 8px 0 0;
+      font-size: 10.5px;
+      color: var(--ink-faint);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+    }
+
+    .day {
+      border-right: 1px dashed var(--hairline);
+      position: relative;
+      /* ruled lines */
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 59px,
+        var(--hairline) 59px,
+        var(--hairline) 60px
+      );
+    }
+    .day:last-child { border-right: none; }
+    .day--today { background-color: var(--accent-softer); }
+
+    .slot {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.3;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .slot__time {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+    .slot__label {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-top: 1px;
+    }
+
+    .slot--available {
+      background: var(--ivory);
+      border: 1.5px dashed var(--ink);
+      color: var(--ink);
+      cursor: crosshair;
+    }
+    .slot--available:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(26, 31, 62, 0.08);
+      border-style: solid;
+      background: var(--accent-softer);
+    }
+
+    .slot--reserved {
+      background: var(--accent);
+      color: var(--cream);
+      border: 1px solid var(--accent);
+      cursor: crosshair;
+      box-shadow: 0 1px 0 rgba(26,31,62,0.08);
+    }
+    .slot--reserved:hover { transform: translateY(-1px); }
+    .slot--reserved .slot__label { opacity: 0.9; }
+
+    .slot--mine {
+      background: var(--sage);
+      color: var(--cream);
+      border: 1px solid var(--sage);
+      cursor: default;
+    }
+    .slot--mine .slot__label { opacity: 0.9; }
+
+    .slot--booked {
+      background: repeating-linear-gradient(
+        -45deg,
+        var(--hairline) 0,
+        var(--hairline) 3px,
+        var(--cream-deep) 3px,
+        var(--cream-deep) 6px
+      );
+      border: 1px solid var(--hairline-strong);
+      color: var(--ink-mute);
+      cursor: not-allowed;
+    }
+
+    /* Booking dialog */
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 31, 62, 0.32);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .dialog {
+      width: 460px;
+      max-width: calc(100vw - 32px);
+      background: var(--ivory);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      box-shadow: var(--shadow-float);
+      overflow: hidden;
+      position: relative;
+    }
+    .dialog::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+    .dialog__head {
+      padding: 22px 26px 8px;
+    }
+    .dialog__kicker {
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .dialog__title {
+      font-family: var(--font-display);
+      font-variation-settings: "opsz" 96, "SOFT" 25;
+      font-weight: 400;
+      font-size: 26px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      margin: 0 0 4px;
+    }
+    .dialog__slot {
+      color: var(--ink-mute);
+      font-size: 14px;
+      margin: 0;
+    }
+    .dialog__slot .tz {
+      display: block;
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+    }
+
+    .dialog__body {
+      padding: 18px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-mute);
+      font-weight: 500;
+    }
+    .field textarea, .field input {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--cream);
+      border: 1px solid var(--hairline-strong);
+      border-radius: 8px;
+      padding: 10px 12px;
+      resize: none;
+      outline: none;
+      transition: border-color 140ms;
+    }
+    .field textarea:focus, .field input:focus { border-color: var(--ink); }
+    .field textarea::placeholder { color: var(--ink-faint); font-style: italic; }
+    .field textarea { min-height: 80px; }
+
+    .price-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 14px 0 0;
+      border-top: 1px dashed var(--hairline-strong);
+    }
+    .price-summary__label {
+      font-size: 12px;
+      color: var(--ink-mute);
+      letter-spacing: 0.04em;
+    }
+    .price-summary__value {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-variation-settings: "opsz" 96;
+      font-weight: 400;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+    }
+
+    .dialog__foot {
+      padding: 14px 26px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      border-top: 1px solid var(--hairline);
+      background: var(--cream);
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+      transition: background 140ms ease, color 140ms ease, transform 120ms ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: var(--ink); color: var(--cream); }
+    .btn:active { transform: translateY(1px); }
+    .btn--ghost {
+      border-color: var(--hairline-strong);
+      color: var(--ink-soft);
+    }
+    .btn--ghost:hover {
+      border-color: var(--ink);
+      background: transparent;
+      color: var(--ink);
+    }
+    .btn--primary {
+      background: var(--ink);
+      color: var(--cream);
+      border-color: var(--ink);
+    }
+    .btn--primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .btn .arrow { transition: transform 140ms ease; }
+    .btn:hover .arrow { transform: translateX(2px); }
+
+    /* Reserved-for-you callout */
+    .callout {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--accent-softer);
+      border: 1px solid rgba(200, 106, 77, 0.25);
+      border-radius: 10px;
+      padding: 14px 16px;
+      max-width: 1180px;
+      margin-bottom: 18px;
+    }
+    .callout svg {
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .callout__text {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+    .callout__text strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .mock-note {
+      position: fixed;
+      top: 10px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26, 31, 62, 0.92);
+      color: var(--cream);
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 100px;
+      letter-spacing: 0.06em;
+      z-index: 30;
+      font-family: var(--font-body);
+      backdrop-filter: blur(4px);
+    }
+    .mock-note strong { font-weight: 600; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="mock-note">design mock · <strong>cahier raffiné</strong> · student calendar</div>
+
+  <div class="app">
+    <!-- DRAWER -->
+    <aside class="drawer">
+      <div class="drawer__brand">
+        <div class="drawer__logo" title="hover me">JS</div>
+        <div class="drawer__brand-text">Jubilate School</div>
+      </div>
+
+      <nav class="drawer__nav">
+        <div class="nav-item" data-active="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Mon calendrier
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>
+          Mes réservations
+        </div>
+
+        <div style="height: 16px"></div>
+
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2V10z"/></svg>
+          Accueil
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/><path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8"/></svg>
+          Se déconnecter
+        </div>
+      </nav>
+
+      <div class="drawer__foot">
+        <div class="drawer__credit">
+          Site développé et maintenu par <a href="#">Pitoune</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="appbar">
+        <div class="appbar__title">Jubilate School</div>
+        <div class="appbar__clock"><span class="dot"></span>Enseignante · 14:42</div>
+        <div class="appbar__user">Camille</div>
+      </div>
+
+      <div class="content">
+
+        <div class="page-head">
+          <div class="page-kicker">Réserver un cours</div>
+          <h1 class="page-title">
+            Mon calendrier
+            <svg class="underline" viewBox="0 0 260 10" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M2 6 Q 60 2, 130 5 T 258 4" fill="none" stroke="#C86A4D" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>
+            </svg>
+          </h1>
+          <p class="page-sub">Choisissez un créneau disponible et validez votre réservation. Le paiement est autorisé mais pas encaissé tant que l'enseignante n'a pas confirmé.</p>
+        </div>
+
+        <!-- Callout -->
+        <div class="callout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l2.4 6.9L22 9.3l-6 4.4 2.3 7.3L12 17l-6.3 4 2.3-7.3-6-4.4 7.6-.4L12 2z"/>
+          </svg>
+          <div class="callout__text">
+            <strong>Un créneau vous a été réservé.</strong> Isabelle a gardé mercredi 22 avril à 16:00 pour vous — réservez-le avant 48h sinon il sera remis à disposition.
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="toolbar__left">
+            <button class="icon-btn" title="Semaine précédente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="icon-btn" title="Semaine suivante">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            <div class="week-label">
+              20 – 26 avril 2026
+              <em>cette semaine</em>
+            </div>
+          </div>
+          <div class="toolbar__right">
+            <button class="btn btn--ghost">Aujourd'hui</button>
+          </div>
+        </div>
+
+        <!-- Legend + rate -->
+        <div class="subbar">
+          <div class="legend">
+            <div class="legend__item"><span class="swatch swatch--available"></span>Disponible</div>
+            <div class="legend__item"><span class="swatch swatch--reserved"></span>Réservé pour vous</div>
+            <div class="legend__item"><span class="swatch swatch--mine"></span>Votre cours</div>
+            <div class="legend__item"><span class="swatch swatch--booked"></span>Déjà pris</div>
+          </div>
+          <div class="price-note">Tarif horaire — <strong>45,00&nbsp;€</strong></div>
+        </div>
+
+        <!-- CALENDAR -->
+        <div class="calendar">
+          <div class="cal-head">
+            <div></div>
+            <div class="today">Lun<span class="day-num">20</span></div>
+            <div>Mar<span class="day-num">21</span></div>
+            <div>Mer<span class="day-num">22</span></div>
+            <div>Jeu<span class="day-num">23</span></div>
+            <div>Ven<span class="day-num">24</span></div>
+            <div>Sam<span class="day-num">25</span></div>
+            <div>Dim<span class="day-num">26</span></div>
+          </div>
+          <div class="cal-body">
+            <div class="hours">
+              <div class="hour-label">9:00</div>
+              <div class="hour-label">10:00</div>
+              <div class="hour-label">11:00</div>
+              <div class="hour-label">12:00</div>
+              <div class="hour-label">13:00</div>
+              <div class="hour-label">14:00</div>
+              <div class="hour-label">15:00</div>
+              <div class="hour-label">16:00</div>
+              <div class="hour-label">17:00</div>
+              <div class="hour-label">18:00</div>
+            </div>
+
+            <!-- MONDAY 20 (today) -->
+            <div class="day day--today">
+              <div class="slot slot--mine" style="top: 480px; height: 58px">
+                <span class="slot__time">17:00 – 18:00</span>
+                <span class="slot__label">Votre cours · confirmé</span>
+              </div>
+            </div>
+
+            <!-- TUESDAY 21 -->
+            <div class="day">
+              <div class="slot slot--available" style="top: 540px; height: 58px">
+                <span class="slot__time">18:00 – 19:00</span>
+                <span class="slot__label">Disponible</span>
+              </div>
+            </div>
+
+            <!-- WEDNESDAY 22 -->
+            <div class="day">
+              <div class="slot slot--reserved" style="top: 420px; height: 58px">
+                <span class="slot__time">16:00 – 17:00</span>
+                <span class="slot__label">Réservé pour vous</span>
+              </div>
+              <div class="slot slot--available" style="top: 480px; height: 58px">
+                <span class="slot__time">17:00 – 18:00</span>
+                <span class="slot__label">Disponible</span>
+              </div>
+            </div>
+
+            <!-- THURSDAY 23 -->
+            <div class="day">
+              <div class="slot slot--booked" style="top: 360px; height: 58px">
+                <span class="slot__time">15:00 – 16:00</span>
+              </div>
+              <div class="slot slot--available" style="top: 540px; height: 58px">
+                <span class="slot__time">18:00 – 19:00</span>
+                <span class="slot__label">Disponible</span>
+              </div>
+            </div>
+
+            <!-- FRIDAY 24 -->
+            <div class="day">
+              <div class="slot slot--mine" style="top: 480px; height: 58px">
+                <span class="slot__time">17:00 – 18:00</span>
+                <span class="slot__label">Votre cours · confirmé</span>
+              </div>
+            </div>
+
+            <!-- SATURDAY 25 -->
+            <div class="day">
+              <div class="slot slot--available" style="top: 60px; height: 58px">
+                <span class="slot__time">10:00 – 11:00</span>
+                <span class="slot__label">Disponible</span>
+              </div>
+              <div class="slot slot--available" style="top: 120px; height: 58px">
+                <span class="slot__time">11:00 – 12:00</span>
+                <span class="slot__label">Disponible</span>
+              </div>
+            </div>
+
+            <!-- SUNDAY 26 -->
+            <div class="day"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- BOOKING DIALOG -->
+  <div class="dialog-backdrop">
+    <div class="dialog" role="dialog" aria-labelledby="dlg-title">
+      <div class="dialog__head">
+        <div class="dialog__kicker">Créneau réservé pour vous</div>
+        <h2 class="dialog__title" id="dlg-title">Réserver ce cours</h2>
+        <p class="dialog__slot">
+          Mercredi 22 avril 2026 · 16:00 – 17:00
+          <span class="tz">Isabelle (Paris) · même fuseau horaire</span>
+        </p>
+      </div>
+
+      <div class="dialog__body">
+        <div class="field">
+          <label for="note">Un mot pour l'enseignante <span style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-faint);font-style:italic">(optionnel)</span></label>
+          <textarea id="note" placeholder="Révisions chapitre sur les dérivées, je bloque sur l'exercice 12..."></textarea>
+        </div>
+
+        <div class="price-summary">
+          <div class="price-summary__label">à régler à la confirmation</div>
+          <div class="price-summary__value">45,00&nbsp;€</div>
+        </div>
+      </div>
+
+      <div class="dialog__foot">
+        <button class="btn btn--ghost">Annuler</button>
+        <button class="btn btn--primary">
+          Réserver
+          <span class="arrow">→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

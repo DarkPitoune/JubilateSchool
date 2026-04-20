@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -21,9 +20,11 @@ import {
   Typography,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import DownloadIcon from "@mui/icons-material/Download";
+import DownloadIcon from "@mui/icons-material/DownloadOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import { useTranslator } from "../../../components";
+import { PageTitle } from "../../../components/platform";
+import { palette } from "../../../components/platformTheme";
 import {
   useAccountingData,
   useAddExtraordinaryExpense,
@@ -102,9 +103,7 @@ const AdminAccounting = () => {
   if (isLoading || !data) {
     return (
       <Box>
-        <Typography variant="h4" sx={{ mb: 3, color: "#030340", fontFamily: "'Kalam', cursive" }}>
-          {_("nav_accounting")}
-        </Typography>
+        <PageTitle kicker={_("accounting_kicker")} title={_("nav_accounting")} />
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
         </Box>
@@ -117,22 +116,22 @@ const AdminAccounting = () => {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3, color: "#030340", fontFamily: "'Kalam', cursive" }}>
-        {_("nav_accounting")}
-      </Typography>
+      <PageTitle
+        kicker={_("accounting_kicker")}
+        title={_("nav_accounting")}
+        subtitle={_("accounting_subtitle")}
+      />
+
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          justifyContent: "flex-end",
           mb: 2,
           flexWrap: "wrap",
           gap: 1,
+          maxWidth: 1100,
         }}
       >
-        <Typography variant="h6" sx={{ color: "#030340" }}>
-          {_("accounting_subtitle")}
-        </Typography>
         <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"
@@ -146,7 +145,6 @@ const AdminAccounting = () => {
             startIcon={<DownloadIcon />}
             onClick={handleLifetime}
             disabled={downloading !== null || !hasAnything}
-            sx={{ bgcolor: "#030340", "&:hover": { bgcolor: "#1a1a5c" } }}
           >
             {_("accounting_download_lifetime")}
           </Button>
@@ -154,11 +152,11 @@ const AdminAccounting = () => {
       </Box>
 
       {!hasAnything ? (
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 3, maxWidth: 1100 }}>
           {_("accounting_empty")}
         </Alert>
       ) : (
-        <TableContainer component={Paper} sx={{ mb: 4 }}>
+        <TableContainer sx={{ mb: 5, maxWidth: 1100 }}>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -166,8 +164,12 @@ const AdminAccounting = () => {
                 <TableCell align="right">{_("accounting_col_bookings")}</TableCell>
                 <TableCell align="right">{_("accounting_col_gross")}</TableCell>
                 <TableCell align="right">{_("accounting_col_fees")}</TableCell>
-                <TableCell align="right">{_("accounting_col_maintenance")}</TableCell>
-                <TableCell align="right">{_("accounting_col_extraordinary")}</TableCell>
+                <TableCell align="right">
+                  {_("accounting_col_maintenance")}
+                </TableCell>
+                <TableCell align="right">
+                  {_("accounting_col_extraordinary")}
+                </TableCell>
                 <TableCell align="right">{_("accounting_col_net")}</TableCell>
                 <TableCell align="right">{_("accounting_col_action")}</TableCell>
               </TableRow>
@@ -175,21 +177,32 @@ const AdminAccounting = () => {
             <TableBody>
               <TableRow
                 sx={{
-                  "& td": { fontWeight: 700, bgcolor: "#f5f5fa", color: "#030340" },
+                  "& td": {
+                    fontWeight: 600,
+                    backgroundColor: palette.creamDeep,
+                    color: palette.ink,
+                    fontVariantNumeric: "tabular-nums",
+                  },
                 }}
               >
                 <TableCell>{_("accounting_lifetime_row")}</TableCell>
                 <TableCell align="right">{data.lifetime.bookings.length}</TableCell>
                 <TableCell align="right">{eur(data.lifetime.gross_cents)}</TableCell>
-                <TableCell align="right">{eur(data.lifetime.stripe_fees_cents)}</TableCell>
-                <TableCell align="right">{eur(data.lifetime.maintenance_cents)}</TableCell>
-                <TableCell align="right">{eur(data.lifetime.extraordinary_cents)}</TableCell>
+                <TableCell align="right">
+                  {eur(data.lifetime.stripe_fees_cents)}
+                </TableCell>
+                <TableCell align="right">
+                  {eur(data.lifetime.maintenance_cents)}
+                </TableCell>
+                <TableCell align="right">
+                  {eur(data.lifetime.extraordinary_cents)}
+                </TableCell>
                 <TableCell align="right">{eur(data.lifetime.net_cents)}</TableCell>
                 <TableCell align="right" />
               </TableRow>
               {data.months.map((m) => (
-                <TableRow key={m.key} hover>
-                  <TableCell>{m.label}</TableCell>
+                <TableRow key={m.key} hover sx={{ "& td": { fontVariantNumeric: "tabular-nums" } }}>
+                  <TableCell sx={{ fontWeight: 500 }}>{m.label}</TableCell>
                   <TableCell align="right">{m.bookings.length}</TableCell>
                   <TableCell align="right">{eur(m.gross_cents)}</TableCell>
                   <TableCell align="right">{eur(m.stripe_fees_cents)}</TableCell>
@@ -201,11 +214,12 @@ const AdminAccounting = () => {
                   <TableCell align="right">
                     <Button
                       size="small"
+                      variant="outlined"
                       startIcon={
                         downloading === m.key ? (
-                          <CircularProgress size={14} />
+                          <CircularProgress size={12} />
                         ) : (
-                          <DownloadIcon />
+                          <DownloadIcon sx={{ fontSize: 14 }} />
                         )
                       }
                       onClick={() => handleMonthly(m)}
@@ -221,30 +235,49 @@ const AdminAccounting = () => {
         </TableContainer>
       )}
 
-      <Typography variant="h6" sx={{ color: "#030340", mb: 1 }}>
+      <Typography
+        variant="h5"
+        sx={{
+          mb: 2,
+          maxWidth: 1100,
+          fontFamily: "'Fraunces', Georgia, serif",
+          fontVariationSettings: "'opsz' 72",
+          fontSize: "1.35rem",
+          color: palette.ink,
+        }}
+      >
         {_("accounting_expenses_title")}
       </Typography>
       {expenses.length === 0 ? (
-        <Alert severity="info">{_("accounting_expenses_empty")}</Alert>
+        <Alert severity="info" sx={{ maxWidth: 1100 }}>
+          {_("accounting_expenses_empty")}
+        </Alert>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer sx={{ maxWidth: 1100 }}>
           <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>{_("accounting_expense_date")}</TableCell>
                 <TableCell>{_("accounting_expense_label")}</TableCell>
-                <TableCell align="right">{_("accounting_expense_amount")}</TableCell>
+                <TableCell align="right">
+                  {_("accounting_expense_amount")}
+                </TableCell>
                 <TableCell align="right">{_("accounting_col_action")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {expenses.map((e) => (
                 <TableRow key={e.id} hover>
-                  <TableCell>
+                  <TableCell sx={{ color: palette.inkMute }}>
                     {dateFmtFr.format(new Date(`${e.incurred_on}T12:00:00`))}
                   </TableCell>
                   <TableCell>{e.label}</TableCell>
-                  <TableCell align="right">{eur(e.amount_cents)}</TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 500 }}
+                  >
+                    {eur(e.amount_cents)}
+                  </TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
@@ -262,14 +295,21 @@ const AdminAccounting = () => {
         </TableContainer>
       )}
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>{_("accounting_add_expense")}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label={_("accounting_expense_label")}
               value={label}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLabel(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setLabel(e.target.value)
+              }
               placeholder="Achat d'un nouveau disque dur"
               fullWidth
               autoFocus
@@ -277,7 +317,9 @@ const AdminAccounting = () => {
             <TextField
               label={_("accounting_expense_amount_eur")}
               value={amount}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setAmount(e.target.value)
+              }
               placeholder="49,90"
               inputProps={{ inputMode: "decimal" }}
               fullWidth
@@ -286,14 +328,19 @@ const AdminAccounting = () => {
               label={_("accounting_expense_date")}
               type="date"
               value={incurredOn}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIncurredOn(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setIncurredOn(e.target.value)
+              }
               InputLabelProps={{ shrink: true }}
               fullWidth
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>
+          <Button
+            variant="outlined"
+            onClick={() => setDialogOpen(false)}
+          >
             {_("accounting_expense_cancel")}
           </Button>
           <Button
@@ -305,7 +352,6 @@ const AdminAccounting = () => {
               !amount.trim() ||
               !incurredOn
             }
-            sx={{ bgcolor: "#030340", "&:hover": { bgcolor: "#1a1a5c" } }}
           >
             {_("accounting_expense_save")}
           </Button>

@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import { Box, Card, CardContent, Typography, Button } from "@mui/material";
-import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslator } from "../../../components";
+import { palette } from "../../../components/platformTheme";
 import { supabase } from "../../../lib/supabase";
 
 const BookingCancel = () => {
@@ -42,19 +43,44 @@ const BookingCancel = () => {
     >
       <Card sx={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
         <CardContent sx={{ p: 4 }}>
-          <CancelOutlinedIcon
-            sx={{ fontSize: 64, color: "#ed6c02", mb: 2 }}
-          />
-          <Typography variant="h4" sx={{ mb: 2, color: "#030340" }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              mx: "auto",
+              mb: 2,
+              borderRadius: "50%",
+              border: `1.5px dashed ${palette.hairlineStrong}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: palette.inkMute,
+              fontSize: "1.5rem",
+            }}
+          >
+            ×
+          </Box>
+          <Typography
+            sx={{
+              mb: 2,
+              color: palette.ink,
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontVariationSettings: "'opsz' 96",
+              fontWeight: 400,
+              fontSize: "1.75rem",
+              letterSpacing: "-0.01em",
+            }}
+          >
             {_("booking_cancel_title")}
           </Typography>
-          <Typography variant="body1" sx={{ mb: 3, color: "#666" }}>
+          <Typography sx={{ mb: 3, color: palette.inkMute }}>
             {_("booking_cancel_description")}
           </Typography>
           <Button
             component={RouterLink}
             to="/app/calendar"
-            variant="contained"
+            variant="outlined"
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
           >
             {_("booking_back_to_calendar")}
           </Button>
