@@ -13,7 +13,102 @@ serve(async (req) => {
   }
 
   try {
-    const { type, booking_id } = await req.json();
+    const { type, booking_id, slot_id } = await req.json();
+
+    // Fetch teacher profile (shared across all branches)
+    const { data: teacherProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("role", "teacher")
+      .limit(1)
+      .single();
+
+    // Slot-reservation email: fetch slot + reserved student instead of a booking
+    if (type === "slot_reserved_student") {
+      const { data: slot } = await supabaseAdmin
+        .from("availability_slots")
+        .select("*, profiles!availability_slots_reserved_for_student_id_fkey(first_name, last_name, email, preferred_lang, timezone)")
+        .eq("id", slot_id)
+        .single();
+
+      if (!slot || !slot.reserved_for_student_id) {
+        return new Response(JSON.stringify({ error: "Reserved slot not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const lang = slot.profiles?.preferred_lang || "fr";
+      const studentEmail = slot.profiles?.email;
+      const studentTz = slot.profiles?.timezone || "Europe/Paris";
+      const teacherTz = teacherProfile?.timezone || "Europe/Paris";
+
+      const fmt = (tz: string, locale: string) =>
+        new Date(slot.start_time).toLocaleString(locale, {
+          dateStyle: "full",
+          timeStyle: "short",
+          timeZone: tz,
+        });
+
+      const dateStrStudent = fmt(studentTz, lang === "fr" ? "fr-FR" : "en-US");
+      const dateStrTeacherForStudent = fmt(teacherTz, lang === "fr" ? "fr-FR" : "en-US");
+      const bookUrl = `${SITE_URL}/app/calendar`;
+
+      const subject =
+        lang === "fr"
+          ? "Un créneau vous est réservé — à confirmer"
+          : "A slot is reserved for you — please confirm";
+
+      const html =
+        lang === "fr"
+          ? `
+        <h2>Un créneau vous est réservé</h2>
+        <p>Emmanuelle a bloqué un créneau pour vous suite à votre échange.</p>
+        <p><strong>Date :</strong> ${dateStrStudent}</p>
+        <p style="color:#888;font-size:13px;"><strong>Heure prof :</strong> ${dateStrTeacherForStudent}</p>
+        <p>Merci de confirmer en le réservant dès que possible :</p>
+        <p style="margin-top:16px;">
+          <a href="${bookUrl}" style="background:#030340;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Confirmer le créneau</a>
+        </p>
+      `
+          : `
+        <h2>A slot has been reserved for you</h2>
+        <p>Emmanuelle has blocked a slot for you following your conversation.</p>
+        <p><strong>Date:</strong> ${dateStrStudent}</p>
+        <p style="color:#888;font-size:13px;"><strong>Teacher's time:</strong> ${dateStrTeacherForStudent}</p>
+        <p>Please confirm by booking it as soon as possible:</p>
+        <p style="margin-top:16px;">
+          <a href="${bookUrl}" style="background:#030340;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Confirm the slot</a>
+        </p>
+      `;
+
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Jubilate School <noreply@school.jubilate.fr>",
+          to: [studentEmail],
+          subject,
+          html,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        console.error("Resend error:", resData);
+        return new Response(JSON.stringify({ error: "Failed to send email" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Fetch booking with student profile
     const { data: booking } = await supabaseAdmin
@@ -30,14 +125,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Fetch teacher profile
-    const { data: teacherProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("*")
-      .eq("role", "teacher")
-      .limit(1)
-      .single();
 
     const studentLang = booking.profiles?.preferred_lang || "fr";
     const studentName = `${booking.profiles?.first_name || ""} ${booking.profiles?.last_name || ""}`.trim() || "Student";

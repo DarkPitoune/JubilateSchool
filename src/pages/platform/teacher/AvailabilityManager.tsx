@@ -102,19 +102,32 @@ const AvailabilityManager = () => {
     setError("");
     setSaving(true);
 
-    const { error: insertError } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from("availability_slots")
       .insert({
         teacher_id: profile!.id,
         start_time: pendingSlotTime.toISOString(),
         reserved_for_student_id: reserveFor?.id ?? null,
-      });
+      })
+      .select()
+      .single();
 
-    setSaving(false);
     if (insertError) {
+      setSaving(false);
       setError(_("avail_error_save"));
       return;
     }
+
+    if (inserted?.reserved_for_student_id) {
+      // Fire-and-forget — do not block UI if email fails
+      supabase.functions
+        .invoke("send-email", {
+          body: { type: "slot_reserved_student", slot_id: inserted.id },
+        })
+        .catch((e) => console.error("Failed to send reservation email:", e));
+    }
+
+    setSaving(false);
     setDialogOpen(false);
     setReserveFor(null);
     invalidate();
