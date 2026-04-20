@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import type { Booking, AvailabilitySlot, Pricing, Profile } from "../types";
+import type {
+  Booking,
+  AvailabilitySlot,
+  ExtraordinaryExpense,
+  Pricing,
+  Profile,
+} from "../types";
 
 // ── Bookings list (teacher sees all, student sees own) ──
 
@@ -327,5 +333,183 @@ export function useUpdateStudentRate() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["students"] }),
+  });
+}
+
+// ── Accounting ──
+
+export interface AccountingMonth {
+  key: string;                 // YYYY-MM, or "lifetime"
+  label: string;               // French label ("Mars 2026") or "Depuis le ..."
+  gross_cents: number;
+  stripe_fees_cents: number;
+  maintenance_cents: number;   // 1% of gross
+  extraordinary_cents: number; // sum of expenses in the period
+  net_cents: number;           // gross - fees - maintenance - extraordinary
+  bookings: Booking[];
+  expenses: ExtraordinaryExpense[];
+}
+
+const PARIS_TZ = "Europe/Paris";
+const FR_MONTHS = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
+
+function monthKeyParis(iso: string): string {
+  // yyyy-MM in Europe/Paris
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: PARIS_TZ,
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date(iso));
+  const y = parts.find((p) => p.type === "year")!.value;
+  const m = parts.find((p) => p.type === "month")!.value;
+  return `${y}-${m}`;
+}
+
+function monthLabelFr(key: string): string {
+  const [y, m] = key.split("-");
+  return `${FR_MONTHS[parseInt(m, 10) - 1]} ${y}`;
+}
+
+export function useAccountingData() {
+  return useQuery({
+    queryKey: ["accounting"],
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const [{ data: bookingsData }, { data: expensesData }] = await Promise.all([
+        supabase
+          .from("bookings")
+          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, email)")
+          .eq("status", "confirmed")
+          .not("stripe_payment_intent_id", "is", null)
+          .order("start_time", { ascending: false }),
+        supabase
+          .from("extraordinary_expenses")
+          .select("*")
+          .order("incurred_on", { ascending: false }),
+      ]);
+
+      const bookings = (bookingsData ?? []) as Booking[];
+      const expenses = (expensesData ?? []) as ExtraordinaryExpense[];
+
+      // Read cached fees from the column; backfill any missing rows via the edge function.
+      const fees: Record<string, number> = {};
+      for (const b of bookings) {
+        if (b.stripe_payment_intent_id && b.stripe_fee_cents != null) {
+          fees[b.stripe_payment_intent_id] = b.stripe_fee_cents;
+        }
+      }
+      const missing = bookings
+        .filter(
+          (b) => b.stripe_payment_intent_id && b.stripe_fee_cents == null,
+        )
+        .map((b) => b.stripe_payment_intent_id as string);
+      if (missing.length > 0) {
+        const { data: fnData, error: fnError } = await supabase.functions.invoke(
+          "fetch-stripe-fees",
+          { body: { payment_intent_ids: missing } },
+        );
+        if (fnError) {
+          console.error("fetch-stripe-fees failed", fnError);
+        } else {
+          const fetched =
+            (fnData as { fees?: Record<string, number> })?.fees ?? {};
+          Object.assign(fees, fetched);
+        }
+      }
+
+      const bookingsByMonth = new Map<string, Booking[]>();
+      for (const b of bookings) {
+        const key = monthKeyParis(b.start_time);
+        const arr = bookingsByMonth.get(key) ?? [];
+        arr.push(b);
+        bookingsByMonth.set(key, arr);
+      }
+
+      const expensesByMonth = new Map<string, ExtraordinaryExpense[]>();
+      for (const e of expenses) {
+        const key = e.incurred_on.slice(0, 7); // YYYY-MM
+        const arr = expensesByMonth.get(key) ?? [];
+        arr.push(e);
+        expensesByMonth.set(key, arr);
+      }
+
+      const allKeys = new Set<string>([
+        ...bookingsByMonth.keys(),
+        ...expensesByMonth.keys(),
+      ]);
+
+      const months: AccountingMonth[] = [...allKeys]
+        .sort((a, b) => (a < b ? 1 : -1))
+        .map((key) => {
+          const bs = bookingsByMonth.get(key) ?? [];
+          const exs = expensesByMonth.get(key) ?? [];
+          const gross = bs.reduce((s, b) => s + b.price_cents, 0);
+          const stripeFees = bs.reduce(
+            (s, b) => s + (fees[b.stripe_payment_intent_id ?? ""] ?? 0),
+            0,
+          );
+          const maintenance = Math.round(gross * 0.01);
+          const extraordinary = exs.reduce((s, e) => s + e.amount_cents, 0);
+          return {
+            key,
+            label: monthLabelFr(key),
+            gross_cents: gross,
+            stripe_fees_cents: stripeFees,
+            maintenance_cents: maintenance,
+            extraordinary_cents: extraordinary,
+            net_cents: gross - stripeFees - maintenance - extraordinary,
+            bookings: bs,
+            expenses: exs,
+          };
+        });
+
+      const gross = months.reduce((s, m) => s + m.gross_cents, 0);
+      const stripeFees = months.reduce((s, m) => s + m.stripe_fees_cents, 0);
+      const maintenance = months.reduce((s, m) => s + m.maintenance_cents, 0);
+      const extraordinary = months.reduce((s, m) => s + m.extraordinary_cents, 0);
+      const lifetime: AccountingMonth = {
+        key: "lifetime",
+        label: "Total (depuis le lancement)",
+        gross_cents: gross,
+        stripe_fees_cents: stripeFees,
+        maintenance_cents: maintenance,
+        extraordinary_cents: extraordinary,
+        net_cents: gross - stripeFees - maintenance - extraordinary,
+        bookings,
+        expenses,
+      };
+
+      return { months, lifetime };
+    },
+  });
+}
+
+export function useAddExtraordinaryExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      label: string;
+      amount_cents: number;
+      incurred_on: string;
+      notes?: string | null;
+    }) => {
+      const { error } = await supabase.from("extraordinary_expenses").insert(input);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["accounting"] }),
+  });
+}
+
+export function useDeleteExtraordinaryExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("extraordinary_expenses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["accounting"] }),
   });
 }

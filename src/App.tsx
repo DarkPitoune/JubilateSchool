@@ -16,6 +16,7 @@ import BookingsList from "./pages/platform/shared/BookingsList";
 import BookingSuccess from "./pages/platform/shared/BookingSuccess";
 import BookingCancel from "./pages/platform/shared/BookingCancel";
 import AdminPage from "./pages/platform/admin/AdminPage";
+import AdminAccounting from "./pages/platform/admin/AdminAccounting";
 
 const PlatformRedirect = () => {
   const { profile, realProfile } = useAuth();
@@ -90,6 +91,14 @@ const App = () => {
             element={
               <RoleGate role="admin">
                 <AdminPage />
+              </RoleGate>
+            }
+          />
+          <Route
+            path="admin/accounting"
+            element={
+              <RoleGate role="admin">
+                <AdminAccounting />
               </RoleGate>
             }
           />

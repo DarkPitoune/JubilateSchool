@@ -26,6 +26,7 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HomeIcon from "@mui/icons-material/Home";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslator } from "../../components";
 import CounterpartClock from "../../components/CounterpartClock";
@@ -98,6 +99,11 @@ const PlatformLayout = () => {
       label: _("admin_title"),
       path: "/app/admin",
       icon: <AdminPanelSettingsIcon />,
+    },
+    {
+      label: _("nav_accounting"),
+      path: "/app/admin/accounting",
+      icon: <AccountBalanceIcon />,
     },
   ];
 

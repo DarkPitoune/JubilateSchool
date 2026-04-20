@@ -109,9 +109,27 @@ serve(async (req) => {
       );
     }
 
-    // Capture the Stripe payment
+    // Capture the Stripe payment and fetch the fee
+    let feeCents: number | null = null;
     if (booking.stripe_payment_intent_id) {
       await stripe.paymentIntents.capture(booking.stripe_payment_intent_id);
+      try {
+        const pi = await stripe.paymentIntents.retrieve(
+          booking.stripe_payment_intent_id,
+          { expand: ["latest_charge.balance_transaction"] },
+        );
+        const charge = pi.latest_charge;
+        const chargeObj =
+          charge && typeof charge === "object" ? (charge as Stripe.Charge) : null;
+        const bt = chargeObj?.balance_transaction;
+        const btObj =
+          bt && typeof bt === "object"
+            ? (bt as Stripe.BalanceTransaction)
+            : null;
+        if (btObj) feeCents = btObj.fee;
+      } catch (err) {
+        console.error("Failed to fetch Stripe fee for booking", booking.id, err);
+      }
     }
 
     // Create Zoom meeting (best-effort)
@@ -123,10 +141,12 @@ serve(async (req) => {
     );
 
     // Update booking status
-    await supabaseAdmin
-      .from("bookings")
-      .update({ status: "confirmed", zoom_meeting_link: zoomLink })
-      .eq("id", booking.id);
+    const update: Record<string, unknown> = {
+      status: "confirmed",
+      zoom_meeting_link: zoomLink,
+    };
+    if (feeCents !== null) update.stripe_fee_cents = feeCents;
+    await supabaseAdmin.from("bookings").update(update).eq("id", booking.id);
 
     // Send confirmation emails
     await supabaseAdmin.functions.invoke("send-email", {

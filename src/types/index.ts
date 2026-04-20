@@ -53,10 +53,20 @@ export interface Booking {
   price_cents: number;
   status: BookingStatus;
   stripe_payment_intent_id: string | null;
+  stripe_fee_cents: number | null;
   confirmation_token: string;
   zoom_meeting_link: string | null;
   created_at: string;
   profiles?: { first_name: string; last_name: string; email?: string; id?: string; timezone?: string };
+}
+
+export interface ExtraordinaryExpense {
+  id: string;
+  label: string;
+  amount_cents: number;
+  incurred_on: string; // YYYY-MM-DD
+  notes: string | null;
+  created_at: string;
 }
 
 export interface Pricing {
