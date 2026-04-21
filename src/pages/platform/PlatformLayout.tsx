@@ -250,17 +250,7 @@ const PlatformLayout = () => {
                   <MenuIcon />
                 </IconButton>
               )}
-              <Typography
-                noWrap
-                sx={{
-                  flex: 1,
-                  fontFamily: "'Kalam', cursive",
-                  fontSize: "1.05rem",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                Jubilate School
-              </Typography>
+              <Box sx={{ flex: 1 }} />
               {counterpartTz && <CounterpartClock timezone={counterpartTz} />}
               <Typography
                 variant="body2"
