@@ -59,8 +59,8 @@ function drawSummary(doc: any, row: AccountingMonth, y: number): number {
   doc.setTextColor(30, 30, 30);
   const lines: Array<[string, string]> = [
     ["Total brut encaissé", eur(row.gross_cents)],
-    ["Frais Stripe", `- ${eur(row.stripe_fees_cents)}`],
-    ["Maintenance (1 %)", `- ${eur(row.maintenance_cents)}`],
+    ["Frais Stripe (inclus dans maintenance)", eur(row.stripe_fees_cents)],
+    ["Maintenance (10 %)", `- ${eur(row.maintenance_cents)}`],
     ["Dépenses exceptionnelles", `- ${eur(row.extraordinary_cents)}`],
     ["Net", eur(row.net_cents)],
   ];
@@ -182,7 +182,7 @@ export async function generateLifetimeReport(
   autoTable(doc, {
     startY: afterSummaryY + 20,
     head: [[
-      "Mois", "Cours", "Brut", "Frais Stripe", "Maintenance", "Dépenses except.", "Net",
+      "Mois", "Cours", "Brut", "Frais Stripe (info)", "Maintenance", "Dépenses except.", "Net",
     ]],
     body,
     foot: [[

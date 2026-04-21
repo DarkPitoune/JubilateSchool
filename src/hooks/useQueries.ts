@@ -398,9 +398,9 @@ export interface AccountingMonth {
   label: string; // French label ("Mars 2026") or "Depuis le ..."
   gross_cents: number;
   stripe_fees_cents: number;
-  maintenance_cents: number; // 1% of gross
+  maintenance_cents: number; // 10% of gross
   extraordinary_cents: number; // sum of expenses in the period
-  net_cents: number; // gross - fees - maintenance - extraordinary
+  net_cents: number; // gross - maintenance - extraordinary (Stripe fees are absorbed by the 10% maintenance)
   bookings: Booking[];
   expenses: ExtraordinaryExpense[];
 }
@@ -526,7 +526,7 @@ export function useAccountingData() {
             stripe_fees_cents: stripeFees,
             maintenance_cents: maintenance,
             extraordinary_cents: extraordinary,
-            net_cents: gross - stripeFees - maintenance - extraordinary,
+            net_cents: gross - maintenance - extraordinary,
             bookings: bs,
             expenses: exs,
           };
@@ -546,7 +546,7 @@ export function useAccountingData() {
         stripe_fees_cents: stripeFees,
         maintenance_cents: maintenance,
         extraordinary_cents: extraordinary,
-        net_cents: gross - stripeFees - maintenance - extraordinary,
+        net_cents: gross - maintenance - extraordinary,
         bookings,
         expenses,
       };
