@@ -1,5 +1,10 @@
 import { useState, useMemo } from "react";
-import { Box, Typography, CircularProgress, useTheme, useMediaQuery } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -9,6 +14,8 @@ import frLocale from "@fullcalendar/core/locales/fr";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTranslator } from "../../../components";
+import { PageTitle } from "../../../components/platform";
+import { palette } from "../../../components/platformTheme";
 import { useLang } from "../../../hooks/useLang";
 import BookingDialog from "./BookingDialog";
 import {
@@ -60,6 +67,10 @@ const StudentCalendar = () => {
   const slotEnd = (startIso: string) =>
     new Date(new Date(startIso).getTime() + 60 * 60 * 1000).toISOString();
 
+  const mySlotIds = new Set(
+    myBookings.map((b) => b.availability_slot_id).filter(Boolean),
+  );
+
   const calendarEvents = [
     ...availableSlots
       .filter((s) => !s.is_booked)
@@ -67,23 +78,23 @@ const StudentCalendar = () => {
         const isReservedForMe = s.reserved_for_student_id === profile?.id;
         return {
           id: `slot-${s.id}`,
-          title: isReservedForMe ? _("booking_reserved_for_you") : _("booking_available"),
+          title: isReservedForMe
+            ? _("booking_reserved_for_you")
+            : _("booking_available"),
           start: s.start_time,
           end: slotEnd(s.start_time),
-          backgroundColor: isReservedForMe ? "#9c27b0" : "#4caf50",
-          borderColor: isReservedForMe ? "#7b1fa2" : "#388e3c",
+          classNames: [isReservedForMe ? "js-slot--reserved" : "js-slot--available"],
           extendedProps: { type: "available", slotId: s.id },
         };
       }),
     ...availableSlots
-      .filter((s) => s.is_booked)
+      .filter((s) => s.is_booked && !mySlotIds.has(s.id))
       .map((s) => ({
         id: `taken-${s.id}`,
         title: _("booking_taken"),
         start: s.start_time,
         end: slotEnd(s.start_time),
-        backgroundColor: "#bdbdbd",
-        borderColor: "#9e9e9e",
+        classNames: ["js-slot--booked"],
         extendedProps: { type: "taken" },
       })),
     ...myBookings.map((b) => ({
@@ -94,36 +105,54 @@ const StudentCalendar = () => {
           : _("booking_my_pending"),
       start: b.start_time,
       end: b.end_time,
-      backgroundColor: b.status === "confirmed" ? "#1976d2" : "#ed6c02",
-      borderColor: b.status === "confirmed" ? "#1565c0" : "#e65100",
+      classNames: [
+        b.status === "confirmed"
+          ? "js-slot--mine-confirmed"
+          : "js-slot--mine-pending",
+      ],
       extendedProps: { type: "my_booking" },
     })),
   ];
 
   return (
     <Box>
-      <Typography
-        variant="h4"
-        sx={{ mb: 1, color: "#030340", fontFamily: "'Kalam', cursive" }}
-      >
-        {_("booking_calendar_title")}
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
-        {_("booking_calendar_instructions")}
-      </Typography>
+      <PageTitle
+        kicker={_("calendar_kicker")}
+        title={_("booking_calendar_title")}
+        subtitle={_("booking_calendar_instructions")}
+      />
 
       <Box
         sx={{
           mb: 3,
           p: 2,
-          bgcolor: "#f9f9f9",
-          borderLeft: "3px solid #4caf50",
-          borderRadius: 1,
+          backgroundColor: palette.accentSofter,
+          border: `1px solid rgba(200, 106, 77, 0.25)`,
+          borderRadius: 2,
+          maxWidth: 1180,
+          display: "flex",
+          gap: 1.5,
+          alignItems: "flex-start",
         }}
       >
-        <Typography variant="body2" sx={{ color: "#555", fontSize: "0.875rem", lineHeight: 1.6 }}>
-          💚 {_("booking_charity_disclaimer")}
-        </Typography>
+        <Box
+          sx={{
+            width: 4,
+            alignSelf: "stretch",
+            backgroundColor: palette.accent,
+            borderRadius: 4,
+            flexShrink: 0,
+          }}
+        />
+        <Box
+          sx={{
+            color: palette.inkSoft,
+            fontSize: "0.88rem",
+            lineHeight: 1.55,
+          }}
+        >
+          {_("booking_charity_disclaimer")}
+        </Box>
       </Box>
 
       {loading ? (
@@ -134,12 +163,12 @@ const StudentCalendar = () => {
         <>
           <Box
             sx={{
-              bgcolor: "white",
-              borderRadius: 1,
+              bgcolor: palette.ivory,
+              border: `1px solid ${palette.hairline}`,
+              borderRadius: 2.5,
               p: { xs: 1, sm: 2 },
               overflowX: "auto",
-              "& .fc": { fontFamily: "inherit" },
-              "& .fc .fc-toolbar": { flexWrap: "wrap", gap: 0.5 },
+              maxWidth: 1180,
             }}
           >
             <FullCalendar
@@ -147,8 +176,16 @@ const StudentCalendar = () => {
               initialView={bigScreen ? "timeGridWeek" : "timeGridDay"}
               headerToolbar={
                 bigScreen
-                  ? { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }
-                  : { left: "prev,next", center: "title", right: "timeGridDay,timeGridWeek" }
+                  ? {
+                      left: "prev,next today",
+                      center: "title",
+                      right: "dayGridMonth,timeGridWeek,timeGridDay",
+                    }
+                  : {
+                      left: "prev,next",
+                      center: "title",
+                      right: "timeGridDay,timeGridWeek",
+                    }
               }
               locales={[frLocale]}
               locale={lang === "fr" ? "fr" : "en"}

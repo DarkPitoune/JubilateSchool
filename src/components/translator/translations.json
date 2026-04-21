@@ -120,6 +120,8 @@
     "students_hourly_rate": "Tarif/h",
     "students_rate_default": "Défaut",
     "students_rate_free": "Gratuit",
+    "students_section_active": "Élèves actifs",
+    "students_section_dormant": "Inactifs",
 
     "cancel": "Retour",
     "save": "Enregistrer",
@@ -179,6 +181,10 @@
     "bookings_cancel_teacher_dialog_text": "L'élève sera remboursé et notifié de l'annulation. Voulez-vous continuer ?",
     "time_in": "Heure à",
     "bookings_join_zoom": "Rejoindre sur Zoom",
+    "bookings_section_needs_action": "À traiter",
+    "bookings_section_upcoming": "À venir",
+    "bookings_section_awaiting": "En attente de confirmation",
+    "bookings_section_past": "Historique",
 
     "admin_title": "Administration",
     "admin_total_students": "Élèves",
@@ -219,7 +225,22 @@
     "cal_feed_copied": "Copié !",
 
     "auth_error_link_expired": "Le lien de confirmation a expiré. Veuillez vous reconnecter pour recevoir un nouveau lien.",
-    "auth_error_generic": "Une erreur est survenue lors de la confirmation. Veuillez réessayer."
+    "auth_error_generic": "Une erreur est survenue lors de la confirmation. Veuillez réessayer.",
+
+    "admin_kicker": "Tableau de bord",
+    "admin_subtitle": "Vue d'ensemble de la plateforme — élèves, réservations et chiffre d'affaires.",
+    "accounting_kicker": "Comptabilité",
+    "dashboard_kicker": "Espace enseignant",
+    "dashboard_subtitle": "Vos cours à venir et les demandes à traiter.",
+    "students_kicker": "Espace enseignant",
+    "students_subtitle": "Vos élèves, leur historique et leurs tarifs personnalisés.",
+    "avail_kicker": "Espace enseignant",
+    "avail_subtitle": "Cliquez sur un créneau pour le rendre disponible ou le retirer.",
+    "bookings_kicker": "Historique",
+    "bookings_subtitle": "Vos réservations, passées comme à venir.",
+    "calendar_kicker": "Réserver un cours",
+    "calendar_subtitle": "Choisissez un créneau disponible et validez votre réservation.",
+    "stat_delta_month": "ce mois-ci"
   },
   "en": {
     "flag": "🇫🇷",
@@ -342,6 +363,8 @@
     "students_hourly_rate": "Rate/h",
     "students_rate_default": "Default",
     "students_rate_free": "Free",
+    "students_section_active": "Active students",
+    "students_section_dormant": "Dormant",
 
     "cancel": "Go back",
     "save": "Save",
@@ -402,6 +425,10 @@
     "bookings_cancel_teacher_dialog_text": "The student will be refunded and notified of the cancellation. Do you want to continue?",
     "time_in": "Time in",
     "bookings_join_zoom": "Join on Zoom",
+    "bookings_section_needs_action": "Needs action",
+    "bookings_section_upcoming": "Upcoming",
+    "bookings_section_awaiting": "Awaiting confirmation",
+    "bookings_section_past": "History",
 
     "admin_title": "Administration",
     "admin_total_students": "Students",
@@ -442,6 +469,21 @@
     "cal_feed_copied": "Copied!",
 
     "auth_error_link_expired": "The confirmation link has expired. Please log in again to receive a new link.",
-    "auth_error_generic": "An error occurred during confirmation. Please try again."
+    "auth_error_generic": "An error occurred during confirmation. Please try again.",
+
+    "admin_kicker": "Dashboard",
+    "admin_subtitle": "Platform overview — students, bookings, and revenue.",
+    "accounting_kicker": "Accounting",
+    "dashboard_kicker": "Teacher space",
+    "dashboard_subtitle": "Your upcoming classes and requests to handle.",
+    "students_kicker": "Teacher space",
+    "students_subtitle": "Your students, their history, and custom rates.",
+    "avail_kicker": "Teacher space",
+    "avail_subtitle": "Click a slot to open it or remove it.",
+    "bookings_kicker": "History",
+    "bookings_subtitle": "Your bookings, past and upcoming.",
+    "calendar_kicker": "Book a class",
+    "calendar_subtitle": "Pick an available slot and confirm your booking.",
+    "stat_delta_month": "this month"
   }
 }

@@ -1,0 +1,267 @@
+/* ------------------------------------------------------------------
+   Cahier raffiné — platform-scoped styles
+   Applied only under a .platform-root element (see PlatformLayout).
+   ------------------------------------------------------------------ */
+
+@keyframes jsPulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+@keyframes jsPulseRing {
+  0% { transform: scale(0.8); opacity: 0.25; }
+  70% { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes jsDrawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Content surface — cream with a quiet dot grid */
+.platform-root .platform-content {
+  background-color: #FAF7F2;
+  background-image: radial-gradient(rgba(26, 31, 62, 0.09) 0.7px, transparent 0.7px);
+  background-size: 26px 26px;
+}
+
+/* Logo tilt on hover */
+.platform-root .platform-logo {
+  transition: transform 250ms ease;
+  display: inline-flex;
+}
+.platform-root .platform-logo:hover {
+  transform: rotate(-2deg);
+}
+
+/* Hand-drawn check SVG for success snackbars */
+.platform-root .js-check-draw path {
+  fill: none;
+  stroke: #6B8E5A;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: jsDrawCheck 420ms ease forwards 200ms;
+}
+
+/* ---------- FullCalendar overrides ---------- */
+
+.platform-root .fc {
+  --fc-border-color: #E5E0D5;
+  --fc-page-bg-color: #FBF9F5;
+  --fc-neutral-bg-color: #FAF7F2;
+  --fc-today-bg-color: rgba(200, 106, 77, 0.05);
+  --fc-now-indicator-color: #C86A4D;
+  --fc-event-text-color: #1A1F3E;
+  font-family: 'Public Sans', -apple-system, system-ui, sans-serif;
+  color: #1A1F3E;
+}
+
+.platform-root .fc .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.platform-root .fc .fc-toolbar-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-variation-settings: 'opsz' 96;
+  font-weight: 400;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: #1A1F3E;
+}
+
+.platform-root .fc .fc-button {
+  background: #FBF9F5;
+  border: 1px solid #D3CCBB;
+  color: #3B4160;
+  text-transform: none;
+  font-weight: 500;
+  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: 8px;
+  box-shadow: none;
+  letter-spacing: 0;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+.platform-root .fc .fc-button:hover,
+.platform-root .fc .fc-button:focus {
+  background: #F2EDE3;
+  border-color: #1A1F3E;
+  color: #1A1F3E;
+  box-shadow: none;
+}
+.platform-root .fc .fc-button-primary:not(:disabled).fc-button-active,
+.platform-root .fc .fc-button-primary:not(:disabled):active {
+  background: #1A1F3E;
+  border-color: #1A1F3E;
+  color: #FAF7F2;
+  box-shadow: none;
+}
+.platform-root .fc .fc-button:disabled { opacity: 0.4; }
+.platform-root .fc .fc-button .fc-icon {
+  font-size: 1em;
+  vertical-align: middle;
+}
+
+/* Column headers */
+.platform-root .fc .fc-col-header-cell-cushion {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6D7189;
+  font-weight: 500;
+  padding: 10px 6px;
+}
+.platform-root .fc .fc-col-header {
+  background: #F2EDE3;
+}
+.platform-root .fc th { border-color: #E5E0D5; }
+
+/* Time-grid structure */
+.platform-root .fc .fc-timegrid-slot {
+  height: 42px;
+  border-color: #E5E0D5;
+}
+.platform-root .fc .fc-timegrid-slot-label {
+  border-color: transparent;
+}
+.platform-root .fc .fc-timegrid-slot-label-cushion {
+  font-size: 0.7rem;
+  color: #A0A3B6;
+  padding: 0 8px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.platform-root .fc .fc-timegrid-col {
+  background: #FBF9F5;
+}
+.platform-root .fc .fc-timegrid-col.fc-day-today {
+  background: rgba(200, 106, 77, 0.04);
+}
+.platform-root .fc td {
+  border-color: #E5E0D5;
+}
+/* dashed column separators */
+.platform-root .fc .fc-timegrid-col {
+  border-right-style: dashed !important;
+}
+
+/* Day grid */
+.platform-root .fc .fc-daygrid-day {
+  background: #FBF9F5;
+}
+.platform-root .fc .fc-daygrid-day.fc-day-today {
+  background: rgba(200, 106, 77, 0.06);
+}
+.platform-root .fc .fc-daygrid-day-number {
+  font-family: 'Fraunces', Georgia, serif;
+  font-variation-settings: 'opsz' 72;
+  color: #1A1F3E;
+  font-weight: 400;
+  padding: 4px 8px;
+}
+
+/* Now indicator */
+.platform-root .fc .fc-timegrid-now-indicator-line {
+  border-color: #C86A4D;
+  border-width: 1.5px;
+}
+.platform-root .fc .fc-timegrid-now-indicator-arrow {
+  border-color: #C86A4D;
+  border-top-color: #C86A4D;
+  border-bottom-color: transparent;
+}
+
+/* Generic event chip */
+.platform-root .fc .fc-event {
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  box-shadow: 0 1px 0 rgba(26, 31, 62, 0.04);
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+.platform-root .fc .fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(26, 31, 62, 0.08);
+}
+.platform-root .fc .fc-event .fc-event-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* Custom classes for slot states (set via eventClassNames) */
+.platform-root .fc .js-slot--available {
+  background: #FBF9F5 !important;
+  border: 1.5px dashed #1A1F3E !important;
+  color: #1A1F3E !important;
+  cursor: crosshair;
+}
+.platform-root .fc .js-slot--available:hover {
+  background: rgba(200, 106, 77, 0.06) !important;
+  border-style: solid !important;
+}
+.platform-root .fc .js-slot--reserved {
+  background: #C86A4D !important;
+  border-color: #C86A4D !important;
+  cursor: crosshair;
+}
+.platform-root .fc .js-slot--mine-confirmed {
+  background: #6B8E5A !important;
+  border-color: #6B8E5A !important;
+}
+.platform-root .fc .js-slot--mine-pending {
+  background: #B8903A !important;
+  border-color: #B8903A !important;
+}
+.platform-root .fc .js-slot--booked {
+  background: repeating-linear-gradient(
+    -45deg,
+    #E5E0D5 0,
+    #E5E0D5 3px,
+    #F2EDE3 3px,
+    #F2EDE3 6px
+  ) !important;
+  border: 1px solid #D3CCBB !important;
+  cursor: not-allowed;
+}
+.platform-root .fc .js-slot--booked,
+.platform-root .fc .js-slot--booked .fc-event-main,
+.platform-root .fc .js-slot--booked .fc-event-title,
+.platform-root .fc .js-slot--booked .fc-event-time {
+  color: #6D7189 !important;
+}
+.platform-root .fc .js-slot--teacher-confirmed {
+  background: #1A1F3E !important;
+  border-color: #1A1F3E !important;
+}
+.platform-root .fc .js-slot--teacher-pending {
+  background: #B8903A !important;
+  border-color: #B8903A !important;
+}
+
+/* Dark-background slots need cream text on inner FullCalendar elements */
+.platform-root .fc .js-slot--reserved,
+.platform-root .fc .js-slot--reserved .fc-event-main,
+.platform-root .fc .js-slot--reserved .fc-event-title,
+.platform-root .fc .js-slot--reserved .fc-event-time,
+.platform-root .fc .js-slot--mine-confirmed,
+.platform-root .fc .js-slot--mine-confirmed .fc-event-main,
+.platform-root .fc .js-slot--mine-confirmed .fc-event-title,
+.platform-root .fc .js-slot--mine-confirmed .fc-event-time,
+.platform-root .fc .js-slot--mine-pending,
+.platform-root .fc .js-slot--mine-pending .fc-event-main,
+.platform-root .fc .js-slot--mine-pending .fc-event-title,
+.platform-root .fc .js-slot--mine-pending .fc-event-time,
+.platform-root .fc .js-slot--teacher-confirmed,
+.platform-root .fc .js-slot--teacher-confirmed .fc-event-main,
+.platform-root .fc .js-slot--teacher-confirmed .fc-event-title,
+.platform-root .fc .js-slot--teacher-confirmed .fc-event-time,
+.platform-root .fc .js-slot--teacher-pending,
+.platform-root .fc .js-slot--teacher-pending .fc-event-main,
+.platform-root .fc .js-slot--teacher-pending .fc-event-title,
+.platform-root .fc .js-slot--teacher-pending .fc-event-time {
+  color: #FAF7F2 !important;
+}
