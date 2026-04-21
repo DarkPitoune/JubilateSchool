@@ -67,6 +67,10 @@ const StudentCalendar = () => {
   const slotEnd = (startIso: string) =>
     new Date(new Date(startIso).getTime() + 60 * 60 * 1000).toISOString();
 
+  const mySlotIds = new Set(
+    myBookings.map((b) => b.availability_slot_id).filter(Boolean),
+  );
+
   const calendarEvents = [
     ...availableSlots
       .filter((s) => !s.is_booked)
@@ -84,7 +88,7 @@ const StudentCalendar = () => {
         };
       }),
     ...availableSlots
-      .filter((s) => s.is_booked)
+      .filter((s) => s.is_booked && !mySlotIds.has(s.id))
       .map((s) => ({
         id: `taken-${s.id}`,
         title: _("booking_taken"),

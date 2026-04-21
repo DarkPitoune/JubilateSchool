@@ -147,6 +147,10 @@ const AdminOverview = () => {
           <TableBody>
             {(data?.profiles ?? [])
               .filter((p) => p.role !== "admin")
+              .sort((a, b) => {
+                if (a.role !== b.role) return a.role === "teacher" ? -1 : 1;
+                return (a.last_name ?? "").localeCompare(b.last_name ?? "");
+              })
               .map((p) => (
                 <TableRow key={p.id} hover>
                   <TableCell sx={{ fontWeight: 500 }}>{fullName(p)}</TableCell>

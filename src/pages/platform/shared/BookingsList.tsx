@@ -160,22 +160,22 @@ const sectionFlags = (
   ctx: Pick<RowContext, "isTeacher" | "kind" | "canCancel">,
 ) => {
   const showStudent = ctx.isTeacher;
-  const showZoom =
-    ctx.kind === "upcoming" && bookings.some((b) => b.zoom_meeting_link);
   const showActions =
     ctx.kind !== "past" && bookings.some((b) => hasRowActions(b, ctx));
   const showStatus = ctx.kind === "past" || ctx.kind === "awaiting";
-  return { showStudent, showZoom, showActions, showStatus };
+  return { showStudent, showActions, showStatus };
 };
 
 const BookingActions = ({
   b,
   ctx,
   size,
+  fullWidth = false,
 }: {
   b: Booking;
   ctx: RowContext;
   size: "small";
+  fullWidth?: boolean;
 }) => {
   const { kind, processing, _, canCancel, openDialog, isTeacher } = ctx;
   const pending = processing === b.id;
@@ -187,6 +187,7 @@ const BookingActions = ({
           size={size}
           variant="contained"
           color="success"
+          fullWidth={fullWidth}
           disabled={pending}
           onClick={() => openDialog(b, "confirm")}
         >
@@ -200,6 +201,7 @@ const BookingActions = ({
           size={size}
           variant="contained"
           color="error"
+          fullWidth={fullWidth}
           disabled={pending}
           onClick={() => openDialog(b, "reject")}
         >
@@ -216,22 +218,11 @@ const BookingActions = ({
   if (kind === "upcoming" || kind === "awaiting") {
     return (
       <>
-        {kind === "upcoming" && b.zoom_meeting_link && (
-          <Button
-            size={size}
-            variant="contained"
-            endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
-            href={b.zoom_meeting_link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {_("bookings_join_zoom")}
-          </Button>
-        )}
         {canCancel(b) && (
           <Button
             size={size}
             variant="outlined"
+            fullWidth={fullWidth}
             disabled={pending}
             onClick={() => openDialog(b, "cancel")}
             sx={{
@@ -250,6 +241,19 @@ const BookingActions = ({
             )}
           </Button>
         )}
+        {kind === "upcoming" && b.zoom_meeting_link && (
+          <Button
+            size={size}
+            variant="contained"
+            fullWidth={fullWidth}
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
+            href={b.zoom_meeting_link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {_("bookings_join_zoom")}
+          </Button>
+        )}
       </>
     );
   }
@@ -264,10 +268,7 @@ const BookingsTable = ({
   bookings: Booking[];
   ctx: RowContext;
 }) => {
-  const { showStudent, showZoom, showActions, showStatus } = sectionFlags(
-    bookings,
-    ctx,
-  );
+  const { showStudent, showActions, showStatus } = sectionFlags(bookings, ctx);
   const { _, locale, lang, counterpartTz } = ctx;
 
   return (
@@ -286,7 +287,6 @@ const BookingsTable = ({
             {showStatus && (
               <TableCell align="right">{_("bookings_status")}</TableCell>
             )}
-            {showZoom && <TableCell align="center">Zoom</TableCell>}
             {showActions && (
               <TableCell align="right">{_("bookings_actions")}</TableCell>
             )}
@@ -334,22 +334,6 @@ const BookingsTable = ({
               {showStatus && (
                 <TableCell align="right">
                   <StatusChip status={b.status} />
-                </TableCell>
-              )}
-              {showZoom && (
-                <TableCell align="center">
-                  {b.status === "confirmed" && b.zoom_meeting_link && (
-                    <Button
-                      size="small"
-                      variant="contained"
-                      endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
-                      href={b.zoom_meeting_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {_("bookings_join_zoom")}
-                    </Button>
-                  )}
                 </TableCell>
               )}
               {showActions && (
@@ -446,7 +430,7 @@ const BookingsCards = ({
               </Typography>
               {hasRowActions(b, ctx) && (
                 <Box sx={{ display: "flex", gap: 1, mt: 1.5 }}>
-                  <BookingActions b={b} ctx={ctx} size="small" />
+                  <BookingActions b={b} ctx={ctx} size="small" fullWidth />
                 </Box>
               )}
             </CardContent>
