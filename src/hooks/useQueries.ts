@@ -10,13 +10,18 @@ import type {
 
 // ── Bookings list (teacher sees all, student sees own) ──
 
-export function useBookingsList(role: string | undefined, userId: string | undefined) {
+export function useBookingsList(
+  role: string | undefined,
+  userId: string | undefined,
+) {
   return useQuery({
     queryKey: ["bookings", { role, userId }],
     queryFn: async () => {
       let query = supabase
         .from("bookings")
-        .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
+        .select(
+          "*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)",
+        )
         .order("start_time", { ascending: false });
 
       if (role !== "teacher") {
@@ -34,10 +39,17 @@ export function useBookingAction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ booking, action }: { booking: Booking; action: "confirm" | "reject" }) => {
-      const endpoint = action === "confirm" ? "confirm-booking" : "reject-booking";
+    mutationFn: async ({
+      booking,
+      action,
+    }: {
+      booking: Booking;
+      action: "confirm" | "reject";
+    }) => {
+      const endpoint =
+        action === "confirm" ? "confirm-booking" : "reject-booking";
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}?token=${booking.confirmation_token}`
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}?token=${booking.confirmation_token}`,
       );
       if (!res.ok) throw new Error("Request failed");
       return { bookingId: booking.id, action };
@@ -59,7 +71,13 @@ export function useCancelBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ bookingId }: { bookingId: string; priceCents: number; wasConfirmed: boolean }) => {
+    mutationFn: async ({
+      bookingId,
+    }: {
+      bookingId: string;
+      priceCents: number;
+      wasConfirmed: boolean;
+    }) => {
       const { error } = await supabase.functions.invoke("cancel-booking", {
         body: { booking_id: bookingId },
       });
@@ -112,7 +130,10 @@ export function useUpdatePricing() {
     mutationFn: async ({ hourlyRateCents }: { hourlyRateCents: number }) => {
       const { error } = await supabase
         .from("pricing")
-        .insert({ hourly_rate_cents: hourlyRateCents, effective_from: new Date().toISOString() });
+        .insert({
+          hourly_rate_cents: hourlyRateCents,
+          effective_from: new Date().toISOString(),
+        });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pricing"] }),
@@ -143,26 +164,33 @@ export function useDashboard() {
     queryKey: ["dashboard"],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const weekFromNow = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
+      ).toISOString();
 
-      const [{ data: upcoming }, { data: pending }, { data: students }] = await Promise.all([
-        supabase
-          .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
-          .eq("status", "confirmed")
-          .gte("start_time", now)
-          .lte("start_time", weekFromNow)
-          .order("start_time", { ascending: true }),
-        supabase
-          .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
-          .eq("status", "pending_confirmation")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("bookings")
-          .select("student_id")
-          .in("status", ["confirmed", "pending_confirmation"]),
-      ]);
+      const [{ data: upcoming }, { data: pending }, { data: students }] =
+        await Promise.all([
+          supabase
+            .from("bookings")
+            .select(
+              "*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)",
+            )
+            .eq("status", "confirmed")
+            .gte("start_time", now)
+            .lte("start_time", weekFromNow)
+            .order("start_time", { ascending: true }),
+          supabase
+            .from("bookings")
+            .select(
+              "*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)",
+            )
+            .eq("status", "pending_confirmation")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("bookings")
+            .select("student_id")
+            .in("status", ["confirmed", "pending_confirmation"]),
+        ]);
 
       const uniqueStudents = new Set(students?.map((b) => b.student_id) || []);
 
@@ -194,7 +222,9 @@ export function useTeacherAvailability(teacherId: string | undefined) {
         const slotIds = slots.map((s) => s.id);
         const { data: bookingsData } = await supabase
           .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)")
+          .select(
+            "*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)",
+          )
           .in("availability_slot_id", slotIds)
           .in("status", ["pending_confirmation", "confirmed"]);
         bookings = (bookingsData || []) as Booking[];
@@ -228,7 +258,10 @@ export function useStudentsForPicker() {
         .select("id, first_name, last_name, email")
         .eq("role", "student")
         .order("last_name");
-      return (data || []) as Pick<Profile, "id" | "first_name" | "last_name" | "email">[];
+      return (data || []) as Pick<
+        Profile,
+        "id" | "first_name" | "last_name" | "email"
+      >[];
     },
   });
 }
@@ -240,20 +273,34 @@ export function useAdminDashboard() {
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
       const [{ data: profiles }, { data: bookings }] = await Promise.all([
-        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false }),
         supabase
           .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, email)")
+          .select(
+            "*, profiles!bookings_student_id_fkey(first_name, last_name, email)",
+          )
           .order("created_at", { ascending: false }),
       ]);
 
       const allProfiles = (profiles || []) as Profile[];
       const allBookings = (bookings || []) as Booking[];
 
-      const studentCount = allProfiles.filter((p) => p.role === "student").length;
-      const confirmedBookings = allBookings.filter((b) => b.status === "confirmed");
-      const pendingBookings = allBookings.filter((b) => b.status === "pending_confirmation");
-      const revenueCents = confirmedBookings.reduce((sum, b) => sum + b.price_cents, 0);
+      const studentCount = allProfiles.filter(
+        (p) => p.role === "student",
+      ).length;
+      const confirmedBookings = allBookings.filter(
+        (b) => b.status === "confirmed",
+      );
+      const pendingBookings = allBookings.filter(
+        (b) => b.status === "pending_confirmation",
+      );
+      const revenueCents = confirmedBookings.reduce(
+        (sum, b) => sum + b.price_cents,
+        0,
+      );
 
       return {
         profiles: allProfiles,
@@ -303,7 +350,9 @@ export function useStudentList() {
           if (b.status === "confirmed") {
             totalConfirmed++;
             totalMinutes += Math.round(
-              (new Date(b.end_time).getTime() - new Date(b.start_time).getTime()) / 60000
+              (new Date(b.end_time).getTime() -
+                new Date(b.start_time).getTime()) /
+                60000,
             );
           }
         }
@@ -325,7 +374,13 @@ export function useStudentList() {
 export function useUpdateStudentRate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ studentId, rateCents }: { studentId: string; rateCents: number | null }) => {
+    mutationFn: async ({
+      studentId,
+      rateCents,
+    }: {
+      studentId: string;
+      rateCents: number | null;
+    }) => {
       const { error } = await supabase
         .from("profiles")
         .update({ custom_hourly_rate_cents: rateCents })
@@ -339,21 +394,31 @@ export function useUpdateStudentRate() {
 // ── Accounting ──
 
 export interface AccountingMonth {
-  key: string;                 // YYYY-MM, or "lifetime"
-  label: string;               // French label ("Mars 2026") or "Depuis le ..."
+  key: string; // YYYY-MM, or "lifetime"
+  label: string; // French label ("Mars 2026") or "Depuis le ..."
   gross_cents: number;
   stripe_fees_cents: number;
-  maintenance_cents: number;   // 1% of gross
+  maintenance_cents: number; // 1% of gross
   extraordinary_cents: number; // sum of expenses in the period
-  net_cents: number;           // gross - fees - maintenance - extraordinary
+  net_cents: number; // gross - fees - maintenance - extraordinary
   bookings: Booking[];
   expenses: ExtraordinaryExpense[];
 }
 
 const PARIS_TZ = "Europe/Paris";
 const FR_MONTHS = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+  "Janvier",
+  "Février",
+  "Mars",
+  "Avril",
+  "Mai",
+  "Juin",
+  "Juillet",
+  "Août",
+  "Septembre",
+  "Octobre",
+  "Novembre",
+  "Décembre",
 ];
 
 function monthKeyParis(iso: string): string {
@@ -378,18 +443,21 @@ export function useAccountingData() {
     queryKey: ["accounting"],
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
-      const [{ data: bookingsData }, { data: expensesData }] = await Promise.all([
-        supabase
-          .from("bookings")
-          .select("*, profiles!bookings_student_id_fkey(first_name, last_name, email)")
-          .eq("status", "confirmed")
-          .not("stripe_payment_intent_id", "is", null)
-          .order("start_time", { ascending: false }),
-        supabase
-          .from("extraordinary_expenses")
-          .select("*")
-          .order("incurred_on", { ascending: false }),
-      ]);
+      const [{ data: bookingsData }, { data: expensesData }] =
+        await Promise.all([
+          supabase
+            .from("bookings")
+            .select(
+              "*, profiles!bookings_student_id_fkey(first_name, last_name, email)",
+            )
+            .eq("status", "confirmed")
+            .not("stripe_payment_intent_id", "is", null)
+            .order("start_time", { ascending: false }),
+          supabase
+            .from("extraordinary_expenses")
+            .select("*")
+            .order("incurred_on", { ascending: false }),
+        ]);
 
       const bookings = (bookingsData ?? []) as Booking[];
       const expenses = (expensesData ?? []) as ExtraordinaryExpense[];
@@ -402,15 +470,13 @@ export function useAccountingData() {
         }
       }
       const missing = bookings
-        .filter(
-          (b) => b.stripe_payment_intent_id && b.stripe_fee_cents == null,
-        )
+        .filter((b) => b.stripe_payment_intent_id && b.stripe_fee_cents == null)
         .map((b) => b.stripe_payment_intent_id as string);
       if (missing.length > 0) {
-        const { data: fnData, error: fnError } = await supabase.functions.invoke(
-          "fetch-stripe-fees",
-          { body: { payment_intent_ids: missing } },
-        );
+        const { data: fnData, error: fnError } =
+          await supabase.functions.invoke("fetch-stripe-fees", {
+            body: { payment_intent_ids: missing },
+          });
         if (fnError) {
           console.error("fetch-stripe-fees failed", fnError);
         } else {
@@ -451,7 +517,7 @@ export function useAccountingData() {
             (s, b) => s + (fees[b.stripe_payment_intent_id ?? ""] ?? 0),
             0,
           );
-          const maintenance = Math.round(gross * 0.01);
+          const maintenance = Math.round(gross * 0.1);
           const extraordinary = exs.reduce((s, e) => s + e.amount_cents, 0);
           return {
             key,
@@ -469,7 +535,10 @@ export function useAccountingData() {
       const gross = months.reduce((s, m) => s + m.gross_cents, 0);
       const stripeFees = months.reduce((s, m) => s + m.stripe_fees_cents, 0);
       const maintenance = months.reduce((s, m) => s + m.maintenance_cents, 0);
-      const extraordinary = months.reduce((s, m) => s + m.extraordinary_cents, 0);
+      const extraordinary = months.reduce(
+        (s, m) => s + m.extraordinary_cents,
+        0,
+      );
       const lifetime: AccountingMonth = {
         key: "lifetime",
         label: "Total (depuis le lancement)",
@@ -496,7 +565,9 @@ export function useAddExtraordinaryExpense() {
       incurred_on: string;
       notes?: string | null;
     }) => {
-      const { error } = await supabase.from("extraordinary_expenses").insert(input);
+      const { error } = await supabase
+        .from("extraordinary_expenses")
+        .insert(input);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["accounting"] }),
@@ -507,7 +578,10 @@ export function useDeleteExtraordinaryExpense() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("extraordinary_expenses").delete().eq("id", id);
+      const { error } = await supabase
+        .from("extraordinary_expenses")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["accounting"] }),
