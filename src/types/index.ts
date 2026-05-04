@@ -69,6 +69,14 @@ export interface ExtraordinaryExpense {
   created_at: string;
 }
 
+export interface CharityDonation {
+  id: string;
+  amount_cents: number;
+  donated_on: string; // YYYY-MM-DD
+  label: string | null;
+  created_at: string;
+}
+
 export interface Pricing {
   id: string;
   hourly_rate_cents: number;

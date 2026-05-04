@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import type {
   Booking,
   AvailabilitySlot,
+  CharityDonation,
   ExtraordinaryExpense,
   Pricing,
   Profile,
@@ -443,24 +444,32 @@ export function useAccountingData() {
     queryKey: ["accounting"],
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
-      const [{ data: bookingsData }, { data: expensesData }] =
-        await Promise.all([
-          supabase
-            .from("bookings")
-            .select(
-              "*, profiles!bookings_student_id_fkey(first_name, last_name, email)",
-            )
-            .eq("status", "confirmed")
-            .not("stripe_payment_intent_id", "is", null)
-            .order("start_time", { ascending: false }),
-          supabase
-            .from("extraordinary_expenses")
-            .select("*")
-            .order("incurred_on", { ascending: false }),
-        ]);
+      const [
+        { data: bookingsData },
+        { data: expensesData },
+        { data: donationsData },
+      ] = await Promise.all([
+        supabase
+          .from("bookings")
+          .select(
+            "*, profiles!bookings_student_id_fkey(first_name, last_name, email)",
+          )
+          .eq("status", "confirmed")
+          .not("stripe_payment_intent_id", "is", null)
+          .order("start_time", { ascending: false }),
+        supabase
+          .from("extraordinary_expenses")
+          .select("*")
+          .order("incurred_on", { ascending: false }),
+        supabase
+          .from("charity_donations")
+          .select("*")
+          .order("donated_on", { ascending: false }),
+      ]);
 
       const bookings = (bookingsData ?? []) as Booking[];
       const expenses = (expensesData ?? []) as ExtraordinaryExpense[];
+      const donations = (donationsData ?? []) as CharityDonation[];
 
       // Read cached fees from the column; backfill any missing rows via the edge function.
       const fees: Record<string, number> = {};
@@ -539,6 +548,11 @@ export function useAccountingData() {
         (s, m) => s + m.extraordinary_cents,
         0,
       );
+      const netLifetime = gross - maintenance - extraordinary;
+      const donatedLifetime = donations.reduce(
+        (s, d) => s + d.amount_cents,
+        0,
+      );
       const lifetime: AccountingMonth = {
         key: "lifetime",
         label: "Total (depuis le lancement)",
@@ -546,12 +560,18 @@ export function useAccountingData() {
         stripe_fees_cents: stripeFees,
         maintenance_cents: maintenance,
         extraordinary_cents: extraordinary,
-        net_cents: gross - maintenance - extraordinary,
+        net_cents: netLifetime,
         bookings,
         expenses,
       };
 
-      return { months, lifetime };
+      return {
+        months,
+        lifetime,
+        donations,
+        donated_cents: donatedLifetime,
+        to_give_cents: netLifetime - donatedLifetime,
+      };
     },
   });
 }
@@ -580,6 +600,35 @@ export function useDeleteExtraordinaryExpense() {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("extraordinary_expenses")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["accounting"] }),
+  });
+}
+
+export function useAddCharityDonation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      amount_cents: number;
+      donated_on: string;
+      label?: string | null;
+    }) => {
+      const { error } = await supabase.from("charity_donations").insert(input);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["accounting"] }),
+  });
+}
+
+export function useDeleteCharityDonation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("charity_donations")
         .delete()
         .eq("id", id);
       if (error) throw error;

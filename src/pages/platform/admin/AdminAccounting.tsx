@@ -27,11 +27,13 @@ import { PageTitle } from "../../../components/platform";
 import { palette } from "../../../components/platformTheme";
 import {
   useAccountingData,
+  useAddCharityDonation,
   useAddExtraordinaryExpense,
+  useDeleteCharityDonation,
   useDeleteExtraordinaryExpense,
   type AccountingMonth,
 } from "../../../hooks/useQueries";
-import type { ExtraordinaryExpense } from "../../../types";
+import type { CharityDonation, ExtraordinaryExpense } from "../../../types";
 import {
   generateLifetimeReport,
   generateMonthlyReport,
@@ -56,6 +58,8 @@ const AdminAccounting = () => {
   const { data, isLoading } = useAccountingData();
   const addExpense = useAddExtraordinaryExpense();
   const deleteExpense = useDeleteExtraordinaryExpense();
+  const addDonation = useAddCharityDonation();
+  const deleteDonation = useDeleteCharityDonation();
   const [downloading, setDownloading] = useState<string | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -63,10 +67,32 @@ const AdminAccounting = () => {
   const [amount, setAmount] = useState("");
   const [incurredOn, setIncurredOn] = useState(todayIso);
 
+  const [donationDialogOpen, setDonationDialogOpen] = useState(false);
+  const [donationLabel, setDonationLabel] = useState("");
+  const [donationAmount, setDonationAmount] = useState("");
+  const [donationDate, setDonationDate] = useState(todayIso);
+
   const resetForm = () => {
     setLabel("");
     setAmount("");
     setIncurredOn(todayIso());
+  };
+
+  const resetDonationForm = () => {
+    setDonationLabel("");
+    setDonationAmount("");
+    setDonationDate(todayIso());
+  };
+
+  const openDonationDialog = (prefillCents: number) => {
+    if (prefillCents > 0) {
+      setDonationAmount((prefillCents / 100).toFixed(2).replace(".", ","));
+    } else {
+      setDonationAmount("");
+    }
+    setDonationLabel("");
+    setDonationDate(todayIso());
+    setDonationDialogOpen(true);
   };
 
   const handleSave = async () => {
@@ -79,6 +105,20 @@ const AdminAccounting = () => {
     });
     resetForm();
     setDialogOpen(false);
+  };
+
+  const handleSaveDonation = async () => {
+    const amountCents = Math.round(
+      parseFloat(donationAmount.replace(",", ".")) * 100,
+    );
+    if (!Number.isFinite(amountCents) || amountCents <= 0) return;
+    await addDonation.mutateAsync({
+      amount_cents: amountCents,
+      donated_on: donationDate,
+      label: donationLabel.trim() || null,
+    });
+    resetDonationForm();
+    setDonationDialogOpen(false);
   };
 
   const handleMonthly = async (row: AccountingMonth) => {
@@ -113,6 +153,8 @@ const AdminAccounting = () => {
 
   const hasAnything = data.months.length > 0;
   const expenses: ExtraordinaryExpense[] = data.lifetime.expenses;
+  const donations: CharityDonation[] = data.donations;
+  const toGiveCents = data.to_give_cents;
 
   return (
     <Box>
@@ -121,6 +163,58 @@ const AdminAccounting = () => {
         title={_("nav_accounting")}
         subtitle={_("accounting_subtitle")}
       />
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          flexWrap: "wrap",
+          backgroundColor: palette.creamDeep,
+          borderRadius: 2,
+          px: 2.5,
+          py: 1.75,
+          mb: 2,
+          maxWidth: 1100,
+        }}
+      >
+        <Box>
+          <Typography
+            variant="caption"
+            sx={{
+              color: palette.inkMute,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {_("accounting_to_give_label")}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: "1.5rem",
+              fontWeight: 600,
+              color: toGiveCents > 0 ? palette.ink : palette.inkMute,
+              fontVariantNumeric: "tabular-nums",
+              lineHeight: 1.2,
+            }}
+          >
+            {eur(Math.max(toGiveCents, 0))}
+          </Typography>
+          <Typography variant="caption" sx={{ color: palette.inkMute }}>
+            {_("accounting_donated_total")} {eur(data.donated_cents)}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => openDonationDialog(toGiveCents)}
+          disabled={toGiveCents <= 0}
+        >
+          {_("accounting_mark_donation")}
+        </Button>
+      </Box>
 
       <Box
         sx={{
@@ -361,6 +455,129 @@ const AdminAccounting = () => {
               !label.trim() ||
               !amount.trim() ||
               !incurredOn
+            }
+          >
+            {_("accounting_expense_save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Typography
+        variant="h5"
+        sx={{
+          mt: 5,
+          mb: 2,
+          maxWidth: 1100,
+          fontFamily: "'Fraunces', Georgia, serif",
+          fontVariationSettings: "'opsz' 72",
+          fontSize: "1.35rem",
+          color: palette.ink,
+        }}
+      >
+        {_("accounting_donations_title")}
+      </Typography>
+      {donations.length === 0 ? (
+        <Alert severity="info" sx={{ maxWidth: 1100 }}>
+          {_("accounting_donations_empty")}
+        </Alert>
+      ) : (
+        <TableContainer sx={{ maxWidth: 1100 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>{_("accounting_expense_date")}</TableCell>
+                <TableCell>{_("accounting_expense_label")}</TableCell>
+                <TableCell align="right">
+                  {_("accounting_expense_amount")}
+                </TableCell>
+                <TableCell align="right">{_("accounting_col_action")}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {donations.map((d) => (
+                <TableRow key={d.id} hover>
+                  <TableCell sx={{ color: palette.inkMute }}>
+                    {dateFmtFr.format(new Date(`${d.donated_on}T12:00:00`))}
+                  </TableCell>
+                  <TableCell>
+                    {d.label || _("accounting_donation_default_label")}
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 500 }}
+                  >
+                    {eur(d.amount_cents)}
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      size="small"
+                      onClick={() => deleteDonation.mutate(d.id)}
+                      disabled={deleteDonation.isPending}
+                      aria-label="delete"
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      <Dialog
+        open={donationDialogOpen}
+        onClose={() => setDonationDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{_("accounting_mark_donation")}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label={_("accounting_expense_amount_eur")}
+              value={donationAmount}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setDonationAmount(e.target.value)
+              }
+              placeholder="49,90"
+              inputProps={{ inputMode: "decimal" }}
+              fullWidth
+              autoFocus
+            />
+            <TextField
+              label={_("accounting_expense_date")}
+              type="date"
+              value={donationDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setDonationDate(e.target.value)
+              }
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            <TextField
+              label={_("accounting_donation_label_optional")}
+              value={donationLabel}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setDonationLabel(e.target.value)
+              }
+              placeholder="Médecins Sans Frontières"
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => setDonationDialogOpen(false)}
+          >
+            {_("accounting_expense_cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveDonation}
+            disabled={
+              addDonation.isPending || !donationAmount.trim() || !donationDate
             }
           >
             {_("accounting_expense_save")}
