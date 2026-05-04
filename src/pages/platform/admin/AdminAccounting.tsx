@@ -163,14 +163,15 @@ const AdminAccounting = () => {
                 <TableCell>{_("accounting_col_month")}</TableCell>
                 <TableCell align="right">{_("accounting_col_bookings")}</TableCell>
                 <TableCell align="right">{_("accounting_col_gross")}</TableCell>
-                <TableCell align="right">{_("accounting_col_fees")}</TableCell>
                 <TableCell align="right">
                   {_("accounting_col_maintenance")}
                 </TableCell>
+                <TableCell align="right">{_("accounting_col_fees")}</TableCell>
                 <TableCell align="right">
                   {_("accounting_col_extraordinary")}
                 </TableCell>
                 <TableCell align="right">{_("accounting_col_net")}</TableCell>
+                <TableCell align="right">{_("accounting_col_profit")}</TableCell>
                 <TableCell align="right">{_("accounting_col_action")}</TableCell>
               </TableRow>
             </TableHead>
@@ -189,15 +190,21 @@ const AdminAccounting = () => {
                 <TableCell align="right">{data.lifetime.bookings.length}</TableCell>
                 <TableCell align="right">{eur(data.lifetime.gross_cents)}</TableCell>
                 <TableCell align="right">
-                  {eur(data.lifetime.stripe_fees_cents)}
+                  {eur(data.lifetime.maintenance_cents)}
                 </TableCell>
                 <TableCell align="right">
-                  {eur(data.lifetime.maintenance_cents)}
+                  {eur(data.lifetime.stripe_fees_cents)}
                 </TableCell>
                 <TableCell align="right">
                   {eur(data.lifetime.extraordinary_cents)}
                 </TableCell>
                 <TableCell align="right">{eur(data.lifetime.net_cents)}</TableCell>
+                <TableCell align="right">
+                  {eur(
+                    data.lifetime.maintenance_cents -
+                      data.lifetime.stripe_fees_cents,
+                  )}
+                </TableCell>
                 <TableCell align="right" />
               </TableRow>
               {data.months.map((m) => (
@@ -205,11 +212,14 @@ const AdminAccounting = () => {
                   <TableCell sx={{ fontWeight: 500 }}>{m.label}</TableCell>
                   <TableCell align="right">{m.bookings.length}</TableCell>
                   <TableCell align="right">{eur(m.gross_cents)}</TableCell>
-                  <TableCell align="right">{eur(m.stripe_fees_cents)}</TableCell>
                   <TableCell align="right">{eur(m.maintenance_cents)}</TableCell>
+                  <TableCell align="right">{eur(m.stripe_fees_cents)}</TableCell>
                   <TableCell align="right">{eur(m.extraordinary_cents)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     {eur(m.net_cents)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {eur(m.maintenance_cents - m.stripe_fees_cents)}
                   </TableCell>
                   <TableCell align="right">
                     <Button
