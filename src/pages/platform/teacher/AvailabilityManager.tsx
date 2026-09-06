@@ -34,7 +34,7 @@ import {
   useStudentsForPicker,
 } from "../../../hooks/useQueries";
 import { fullName } from "../../../types";
-import type { AvailabilitySlot } from "../../../types";
+import type { TeacherSlot } from "../../../types";
 
 type StudentOption = {
   id: string;
@@ -53,15 +53,14 @@ const AvailabilityManager = () => {
   const queryClient = useQueryClient();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<TeacherSlot | null>(null);
   const [pendingSlotTime, setPendingSlotTime] = useState<Date | null>(null);
   const [reserveFor, setReserveFor] = useState<StudentOption | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const { data, isLoading } = useTeacherAvailability(profile?.id);
-  const slots = data?.slots ?? [];
-  const bookings = data?.bookings ?? [];
+  const slots = data ?? [];
   const { data: students = [] } = useStudentsForPicker();
 
   const studentById = (id: string | null | undefined) =>
@@ -145,10 +144,7 @@ const AvailabilityManager = () => {
   const handleRemove = async () => {
     if (!selectedSlot) return;
 
-    const hasActiveBooking = bookings.some(
-      (b) => b.availability_slot_id === selectedSlot.id
-    );
-    if (hasActiveBooking) {
+    if (selectedSlot.booking_id) {
       setError(_("avail_error_delete_has_bookings"));
       return;
     }
@@ -174,17 +170,22 @@ const AvailabilityManager = () => {
     new Date(new Date(startIso).getTime() + 60 * 60 * 1000).toISOString();
 
   const calendarEvents = slots.map((s) => {
-    const booking = bookings.find((b) => b.availability_slot_id === s.id);
-    const isBooked = !!booking;
+    const isBooked = !!s.booking_id;
     const reservedStudent = !isBooked ? studentById(s.reserved_for_student_id) : null;
     const isReserved = !!reservedStudent;
 
     let title: string;
     let className: string;
     if (isBooked) {
-      title = fullName(booking!.profiles) || _("avail_booking");
+      title =
+        s.student_first_name || s.student_last_name
+          ? fullName({
+              first_name: s.student_first_name ?? "",
+              last_name: s.student_last_name ?? "",
+            })
+          : _("avail_booking");
       className =
-        booking!.status === "confirmed"
+        s.booking_status === "confirmed"
           ? "js-slot--teacher-confirmed"
           : "js-slot--teacher-pending";
     } else if (isReserved) {

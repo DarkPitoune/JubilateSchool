@@ -7,6 +7,7 @@ import type {
   ExtraordinaryExpense,
   Pricing,
   Profile,
+  TeacherSlot,
 } from "../types";
 
 // ── Bookings list (teacher sees all, student sees own) ──
@@ -210,28 +211,9 @@ export function useTeacherAvailability(teacherId: string | undefined) {
   return useQuery({
     queryKey: ["availability-slots", "teacher", teacherId],
     queryFn: async () => {
-      const { data: slotsData } = await supabase
-        .from("availability_slots")
-        .select("*")
-        .eq("teacher_id", teacherId!)
-        .order("start_time", { ascending: true });
-
-      const slots = (slotsData || []) as AvailabilitySlot[];
-
-      let bookings: Booking[] = [];
-      if (slots.length > 0) {
-        const slotIds = slots.map((s) => s.id);
-        const { data: bookingsData } = await supabase
-          .from("bookings")
-          .select(
-            "*, profiles!bookings_student_id_fkey(first_name, last_name, timezone)",
-          )
-          .in("availability_slot_id", slotIds)
-          .in("status", ["pending_confirmation", "confirmed"]);
-        bookings = (bookingsData || []) as Booking[];
-      }
-
-      return { slots, bookings };
+      const { data, error } = await supabase.rpc("get_teacher_slots");
+      if (error) throw error;
+      return (data || []) as TeacherSlot[];
     },
     enabled: !!teacherId,
   });

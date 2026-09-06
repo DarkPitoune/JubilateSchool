@@ -60,6 +60,19 @@ export interface Booking {
   profiles?: { first_name: string; last_name: string; email?: string; id?: string; timezone?: string };
 }
 
+// A slot already joined to its active booking by the get_teacher_slots RPC
+export interface TeacherSlot {
+  id: string;
+  teacher_id: string;
+  start_time: string;
+  created_at: string;
+  reserved_for_student_id: string | null;
+  booking_id: string | null;
+  booking_status: BookingStatus | null;
+  student_first_name: string | null;
+  student_last_name: string | null;
+}
+
 export interface ExtraordinaryExpense {
   id: string;
   label: string;
