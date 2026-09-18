@@ -1,6 +1,7 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import AuthCallbackHandler from "./components/AuthCallbackHandler";
+import DevBar from "./components/DevBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleGate from "./components/RoleGate";
 import { useAuth } from "./contexts/AuthContext";
@@ -28,7 +29,9 @@ const PlatformRedirect = () => {
 
 const HomeRoute = () => {
   const { session, loading } = useAuth();
-  if (!loading && session) return <Navigate to="/app" replace />;
+  const [params] = useSearchParams();
+  const forceLanding = import.meta.env.DEV && params.has("landing");
+  if (!forceLanding && !loading && session) return <Navigate to="/app" replace />;
   return <LandingPage />;
 };
 
@@ -36,6 +39,7 @@ const App = () => {
   return (
     <>
     <AuthCallbackHandler />
+    {import.meta.env.DEV && <DevBar />}
     <Routes>
         <Route path="/" element={<HomeRoute />} />
         <Route path="/en" element={<HomeRoute />} />
