@@ -4,7 +4,7 @@ import type {
   Booking,
   AvailabilitySlot,
   CharityDonation,
-  ExtraordinaryExpense,
+  Expense,
   Pricing,
   Profile,
   TeacherSlot,
@@ -382,10 +382,11 @@ export interface AccountingMonth {
   gross_cents: number;
   stripe_fees_cents: number;
   maintenance_cents: number; // 10% of gross
-  extraordinary_cents: number; // sum of expenses in the period
-  net_cents: number; // gross - maintenance - extraordinary (Stripe fees are absorbed by the 10% maintenance)
+  net_cents: number; // gross - maintenance, the amount owed to charity
+  expenses_cents: number; // sum of expenses in the period
+  profit_cents: number; // maintenance - stripe fees - expenses
   bookings: Booking[];
-  expenses: ExtraordinaryExpense[];
+  expenses: Expense[];
 }
 
 const PARIS_TZ = "Europe/Paris";
@@ -440,7 +441,7 @@ export function useAccountingData() {
           .not("stripe_payment_intent_id", "is", null)
           .order("start_time", { ascending: false }),
         supabase
-          .from("extraordinary_expenses")
+          .from("expenses")
           .select("*")
           .order("incurred_on", { ascending: false }),
         supabase
@@ -450,7 +451,7 @@ export function useAccountingData() {
       ]);
 
       const bookings = (bookingsData ?? []) as Booking[];
-      const expenses = (expensesData ?? []) as ExtraordinaryExpense[];
+      const expenses = (expensesData ?? []) as Expense[];
       const donations = (donationsData ?? []) as CharityDonation[];
 
       // Read cached fees from the column; backfill any missing rows via the edge function.
@@ -485,7 +486,7 @@ export function useAccountingData() {
         bookingsByMonth.set(key, arr);
       }
 
-      const expensesByMonth = new Map<string, ExtraordinaryExpense[]>();
+      const expensesByMonth = new Map<string, Expense[]>();
       for (const e of expenses) {
         const key = e.incurred_on.slice(0, 7); // YYYY-MM
         const arr = expensesByMonth.get(key) ?? [];
@@ -509,15 +510,16 @@ export function useAccountingData() {
             0,
           );
           const maintenance = Math.round(gross * 0.1);
-          const extraordinary = exs.reduce((s, e) => s + e.amount_cents, 0);
+          const spent = exs.reduce((s, e) => s + e.amount_cents, 0);
           return {
             key,
             label: monthLabelFr(key),
             gross_cents: gross,
             stripe_fees_cents: stripeFees,
             maintenance_cents: maintenance,
-            extraordinary_cents: extraordinary,
-            net_cents: gross - maintenance - extraordinary,
+            net_cents: gross - maintenance,
+            expenses_cents: spent,
+            profit_cents: maintenance - stripeFees - spent,
             bookings: bs,
             expenses: exs,
           };
@@ -526,11 +528,9 @@ export function useAccountingData() {
       const gross = months.reduce((s, m) => s + m.gross_cents, 0);
       const stripeFees = months.reduce((s, m) => s + m.stripe_fees_cents, 0);
       const maintenance = months.reduce((s, m) => s + m.maintenance_cents, 0);
-      const extraordinary = months.reduce(
-        (s, m) => s + m.extraordinary_cents,
-        0,
-      );
-      const netLifetime = gross - maintenance - extraordinary;
+      const spent = months.reduce((s, m) => s + m.expenses_cents, 0);
+      const netLifetime = gross - maintenance;
+      const profitLifetime = maintenance - stripeFees - spent;
       const donatedLifetime = donations.reduce(
         (s, d) => s + d.amount_cents,
         0,
@@ -541,8 +541,9 @@ export function useAccountingData() {
         gross_cents: gross,
         stripe_fees_cents: stripeFees,
         maintenance_cents: maintenance,
-        extraordinary_cents: extraordinary,
         net_cents: netLifetime,
+        expenses_cents: spent,
+        profit_cents: profitLifetime,
         bookings,
         expenses,
       };
@@ -553,12 +554,13 @@ export function useAccountingData() {
         donations,
         donated_cents: donatedLifetime,
         to_give_cents: netLifetime - donatedLifetime,
+        available_cents: profitLifetime,
       };
     },
   });
 }
 
-export function useAddExtraordinaryExpense() {
+export function useAddExpense() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
@@ -567,21 +569,19 @@ export function useAddExtraordinaryExpense() {
       incurred_on: string;
       notes?: string | null;
     }) => {
-      const { error } = await supabase
-        .from("extraordinary_expenses")
-        .insert(input);
+      const { error } = await supabase.from("expenses").insert(input);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["accounting"] }),
   });
 }
 
-export function useDeleteExtraordinaryExpense() {
+export function useDeleteExpense() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("extraordinary_expenses")
+        .from("expenses")
         .delete()
         .eq("id", id);
       if (error) throw error;
