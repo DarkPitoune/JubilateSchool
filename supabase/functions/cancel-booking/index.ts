@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@14?target=deno";
 import { corsHeaders } from "../_shared/cors.ts";
 import { supabaseAdmin, getSupabaseUser } from "../_shared/supabase.ts";
 import { captureException } from "../_shared/sentry.ts";
+import { readBooking, runWithRetry, transitionBooking } from "../_shared/db.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
@@ -28,11 +29,15 @@ serve(async (req) => {
     }
 
     // Get caller's profile
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const profile = await runWithRetry<{ role: string }>(
+      `read profile ${user.id}`,
+      () =>
+        supabaseAdmin
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle(),
+    );
 
     if (!profile) {
       return new Response(
@@ -51,11 +56,7 @@ serve(async (req) => {
     }
 
     // Fetch the booking
-    const { data: booking } = await supabaseAdmin
-      .from("bookings")
-      .select("*")
-      .eq("id", booking_id)
-      .single();
+    const booking = await readBooking(booking_id);
 
     if (!booking) {
       return new Response(
@@ -106,12 +107,16 @@ serve(async (req) => {
         paymentIntent.status === "requires_action"
       ) {
         // Authorization not yet captured — cancel the PaymentIntent
-        await stripe.paymentIntents.cancel(booking.stripe_payment_intent_id);
-      } else if (paymentIntent.status === "succeeded") {
-        // Payment was captured — issue a refund
-        await stripe.refunds.create({
-          payment_intent: booking.stripe_payment_intent_id,
+        await stripe.paymentIntents.cancel(booking.stripe_payment_intent_id, {
+          idempotencyKey: `cancel-booking:cancel:${booking.id}`,
         });
+      } else if (paymentIntent.status === "succeeded") {
+        // Payment was captured — issue a refund. The key keeps a retried
+        // cancellation from refunding the same charge twice.
+        await stripe.refunds.create(
+          { payment_intent: booking.stripe_payment_intent_id },
+          { idempotencyKey: `cancel-booking:refund:${booking.id}` },
+        );
       }
     }
 
@@ -119,28 +124,35 @@ serve(async (req) => {
     const newStatus =
       role === "student" ? "cancelled_by_student" : "cancelled_by_teacher";
 
-    await supabaseAdmin
-      .from("bookings")
-      .update({ status: newStatus })
-      .eq("id", booking.id);
+    const status = await transitionBooking(
+      booking.id,
+      ["pending_confirmation", "confirmed"],
+      { status: newStatus },
+    );
+
+    if (status !== newStatus) {
+      return new Response(
+        JSON.stringify({ error: `Booking is now "${status}"` }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Send notification emails
-    if (role === "student") {
-      // Notify teacher
-      await supabaseAdmin.functions.invoke("send-email", {
+    const { error: emailError } = await supabaseAdmin.functions.invoke(
+      "send-email",
+      {
         body: {
-          type: "booking_cancelled_by_student_teacher",
+          type:
+            role === "student"
+              ? "booking_cancelled_by_student_teacher"
+              : "booking_cancelled_by_teacher_student",
           booking_id: booking.id,
         },
-      });
-    } else {
-      // Notify student
-      await supabaseAdmin.functions.invoke("send-email", {
-        body: {
-          type: "booking_cancelled_by_teacher_student",
-          booking_id: booking.id,
-        },
-      });
+      },
+    );
+    if (emailError) {
+      console.error("Failed to send cancellation email:", emailError);
+      captureException(emailError, { function: "cancel-booking" });
     }
 
     return new Response(

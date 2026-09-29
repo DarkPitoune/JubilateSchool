@@ -13,7 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const { type, booking_id, slot_id } = await req.json();
+    const {
+      type,
+      booking_id,
+      slot_id,
+      series_count,
+      series_interval_weeks,
+      series_last_start,
+    } = await req.json();
 
     // Fetch teacher profile (shared across all branches)
     const { data: teacherProfile } = await supabaseAdmin
@@ -54,10 +61,40 @@ serve(async (req) => {
       const dateStrTeacherForStudent = fmt(teacherTz, lang === "fr" ? "fr-FR" : "en-US");
       const bookUrl = `${SITE_URL}/app/calendar`;
 
+      const isSeries = (series_count ?? 1) > 1;
+      const seriesLastStr = series_last_start
+        ? new Date(series_last_start).toLocaleDateString(
+            lang === "fr" ? "fr-FR" : "en-US",
+            { dateStyle: "long", timeZone: studentTz },
+          )
+        : "";
+      const weekday = new Date(slot.start_time).toLocaleDateString(
+        lang === "fr" ? "fr-FR" : "en-US",
+        { weekday: "long", timeZone: studentTz },
+      );
+      const timeStr = new Date(slot.start_time).toLocaleTimeString(
+        lang === "fr" ? "fr-FR" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: studentTz },
+      );
+      const everyTwoWeeks = (series_interval_weeks ?? 1) === 2;
+      const seriesLine = !isSeries
+        ? ""
+        : lang === "fr"
+          ? `<p><strong>${series_count} séances</strong> vous sont réservées : ${
+              everyTwoWeeks ? `un ${weekday} sur deux` : `tous les ${weekday}s`
+            } à ${timeStr}, jusqu'au ${seriesLastStr}. Merci de les réserver une par une sur la plateforme.</p>`
+          : `<p><strong>${series_count} sessions</strong> are reserved for you: ${
+              everyTwoWeeks ? "every other" : "every"
+            } ${weekday} at ${timeStr}, until ${seriesLastStr}. Please book them one by one on the platform.</p>`;
+
       const subject =
         lang === "fr"
-          ? "Un créneau vous est réservé — à confirmer"
-          : "A slot is reserved for you — please confirm";
+          ? isSeries
+            ? "Des créneaux vous sont réservés — à confirmer"
+            : "Un créneau vous est réservé — à confirmer"
+          : isSeries
+            ? "Slots are reserved for you — please confirm"
+            : "A slot is reserved for you — please confirm";
 
       const html =
         lang === "fr"
@@ -66,6 +103,7 @@ serve(async (req) => {
         <p>Emmanuelle a bloqué un créneau pour vous suite à votre échange.</p>
         <p><strong>Date :</strong> ${dateStrStudent}</p>
         <p style="color:#888;font-size:13px;"><strong>Heure prof :</strong> ${dateStrTeacherForStudent}</p>
+        ${seriesLine}
         <p>Merci de confirmer en le réservant dès que possible :</p>
         <p style="margin-top:16px;">
           <a href="${bookUrl}" style="background:#030340;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Confirmer le créneau</a>
@@ -76,6 +114,7 @@ serve(async (req) => {
         <p>Emmanuelle has blocked a slot for you following your conversation.</p>
         <p><strong>Date:</strong> ${dateStrStudent}</p>
         <p style="color:#888;font-size:13px;"><strong>Teacher's time:</strong> ${dateStrTeacherForStudent}</p>
+        ${seriesLine}
         <p>Please confirm by booking it as soon as possible:</p>
         <p style="margin-top:16px;">
           <a href="${bookUrl}" style="background:#030340;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Confirm the slot</a>

@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@14?target=deno";
 import { corsHeaders } from "../_shared/cors.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
 import { captureException } from "../_shared/sentry.ts";
+import { findBookingByToken, transitionBooking } from "../_shared/db.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
@@ -24,13 +25,7 @@ serve(async (req) => {
       });
     }
 
-    // Find the booking by confirmation token
-    const { data: booking } = await supabaseAdmin
-      .from("bookings")
-      .select("*")
-      .eq("confirmation_token", token)
-      .eq("status", "pending_confirmation")
-      .single();
+    const booking = await findBookingByToken(token);
 
     if (!booking) {
       return new Response(
@@ -42,24 +37,55 @@ serve(async (req) => {
       );
     }
 
-    // Cancel (release) the Stripe payment authorization
+    // Release the authorization, unless a retry already released it.
     if (booking.stripe_payment_intent_id) {
-      await stripe.paymentIntents.cancel(booking.stripe_payment_intent_id);
+      const intent = await stripe.paymentIntents.retrieve(
+        booking.stripe_payment_intent_id,
+      );
+
+      if (intent.status === "succeeded") {
+        throw new Error(
+          `PaymentIntent ${booking.stripe_payment_intent_id} is already captured; the booking must be cancelled and refunded instead of rejected`,
+        );
+      }
+
+      if (intent.status !== "canceled") {
+        await stripe.paymentIntents.cancel(booking.stripe_payment_intent_id, {
+          idempotencyKey: `reject-booking:cancel:${booking.id}`,
+        });
+      }
     }
 
-    // Update booking status
-    await supabaseAdmin
-      .from("bookings")
-      .update({ status: "rejected" })
-      .eq("id", booking.id);
+    const status = await transitionBooking(
+      booking.id,
+      "pending_confirmation",
+      { status: "rejected" },
+    );
+
+    if (status !== "rejected") {
+      return new Response(
+        renderHTML(
+          "Already processed",
+          `This booking is now "${status}" and cannot be rejected.`
+        ),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+      );
+    }
 
     // Notify student
-    await supabaseAdmin.functions.invoke("send-email", {
-      body: {
-        type: "booking_rejected_student",
-        booking_id: booking.id,
+    const { error: emailError } = await supabaseAdmin.functions.invoke(
+      "send-email",
+      {
+        body: {
+          type: "booking_rejected_student",
+          booking_id: booking.id,
+        },
       },
-    });
+    );
+    if (emailError) {
+      console.error("Failed to notify student:", emailError);
+      captureException(emailError, { function: "reject-booking" });
+    }
 
     return new Response(
       renderHTML(
