@@ -28,12 +28,12 @@ import { palette } from "../../../components/platformTheme";
 import {
   useAccountingData,
   useAddCharityDonation,
-  useAddExtraordinaryExpense,
+  useAddExpense,
   useDeleteCharityDonation,
-  useDeleteExtraordinaryExpense,
+  useDeleteExpense,
   type AccountingMonth,
 } from "../../../hooks/useQueries";
-import type { CharityDonation, ExtraordinaryExpense } from "../../../types";
+import type { CharityDonation, Expense } from "../../../types";
 import {
   generateLifetimeReport,
   generateMonthlyReport,
@@ -53,11 +53,67 @@ const dateFmtFr = new Intl.DateTimeFormat("fr-FR", {
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
+const SummaryCard = ({
+  label,
+  amountCents,
+  caption,
+  action,
+}: {
+  label: string;
+  amountCents: number;
+  caption: string;
+  action: React.ReactNode;
+}) => (
+  <Box
+    sx={{
+      flex: "1 1 320px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 2,
+      flexWrap: "wrap",
+      backgroundColor: palette.creamDeep,
+      borderRadius: 2,
+      px: 2.5,
+      py: 1.75,
+    }}
+  >
+    <Box>
+      <Typography
+        variant="caption"
+        sx={{
+          color: palette.inkMute,
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontFamily: "'Fraunces', Georgia, serif",
+          fontSize: "1.5rem",
+          fontWeight: 600,
+          color: amountCents > 0 ? palette.ink : palette.inkMute,
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1.2,
+        }}
+      >
+        {eur(amountCents)}
+      </Typography>
+      <Typography variant="caption" sx={{ color: palette.inkMute }}>
+        {caption}
+      </Typography>
+    </Box>
+    {action}
+  </Box>
+);
+
 const AdminAccounting = () => {
   const _ = useTranslator();
   const { data, isLoading } = useAccountingData();
-  const addExpense = useAddExtraordinaryExpense();
-  const deleteExpense = useDeleteExtraordinaryExpense();
+  const addExpense = useAddExpense();
+  const deleteExpense = useDeleteExpense();
   const addDonation = useAddCharityDonation();
   const deleteDonation = useDeleteCharityDonation();
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -152,7 +208,7 @@ const AdminAccounting = () => {
   }
 
   const hasAnything = data.months.length > 0;
-  const expenses: ExtraordinaryExpense[] = data.lifetime.expenses;
+  const expenses: Expense[] = data.lifetime.expenses;
   const donations: CharityDonation[] = data.donations;
   const toGiveCents = data.to_give_cents;
 
@@ -167,53 +223,41 @@ const AdminAccounting = () => {
       <Box
         sx={{
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
           gap: 2,
           flexWrap: "wrap",
-          backgroundColor: palette.creamDeep,
-          borderRadius: 2,
-          px: 2.5,
-          py: 1.75,
           mb: 2,
           maxWidth: 1100,
         }}
       >
-        <Box>
-          <Typography
-            variant="caption"
-            sx={{
-              color: palette.inkMute,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-            }}
-          >
-            {_("accounting_to_give_label")}
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "'Fraunces', Georgia, serif",
-              fontSize: "1.5rem",
-              fontWeight: 600,
-              color: toGiveCents > 0 ? palette.ink : palette.inkMute,
-              fontVariantNumeric: "tabular-nums",
-              lineHeight: 1.2,
-            }}
-          >
-            {eur(Math.max(toGiveCents, 0))}
-          </Typography>
-          <Typography variant="caption" sx={{ color: palette.inkMute }}>
-            {_("accounting_donated_total")} {eur(data.donated_cents)}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => openDonationDialog(toGiveCents)}
-          disabled={toGiveCents <= 0}
-        >
-          {_("accounting_mark_donation")}
-        </Button>
+        <SummaryCard
+          label={_("accounting_to_give_label")}
+          amountCents={Math.max(toGiveCents, 0)}
+          caption={`${_("accounting_donated_total")} ${eur(data.donated_cents)}`}
+          action={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => openDonationDialog(toGiveCents)}
+              disabled={toGiveCents <= 0}
+            >
+              {_("accounting_mark_donation")}
+            </Button>
+          }
+        />
+        <SummaryCard
+          label={_("accounting_available_label")}
+          amountCents={data.available_cents}
+          caption={`${_("accounting_spent_total")} ${eur(data.lifetime.expenses_cents)}`}
+          action={
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={() => setDialogOpen(true)}
+            >
+              {_("accounting_add_expense")}
+            </Button>
+          }
+        />
       </Box>
 
       <Box
@@ -221,28 +265,17 @@ const AdminAccounting = () => {
           display: "flex",
           justifyContent: "flex-end",
           mb: 2,
-          flexWrap: "wrap",
-          gap: 1,
           maxWidth: 1100,
         }}
       >
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => setDialogOpen(true)}
-          >
-            {_("accounting_add_expense")}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={handleLifetime}
-            disabled={downloading !== null || !hasAnything}
-          >
-            {_("accounting_download_lifetime")}
-          </Button>
-        </Stack>
+        <Button
+          variant="contained"
+          startIcon={<DownloadIcon />}
+          onClick={handleLifetime}
+          disabled={downloading !== null || !hasAnything}
+        >
+          {_("accounting_download_lifetime")}
+        </Button>
       </Box>
 
       {!hasAnything ? (
@@ -261,10 +294,8 @@ const AdminAccounting = () => {
                   {_("accounting_col_maintenance")}
                 </TableCell>
                 <TableCell align="right">{_("accounting_col_fees")}</TableCell>
-                <TableCell align="right">
-                  {_("accounting_col_extraordinary")}
-                </TableCell>
                 <TableCell align="right">{_("accounting_col_net")}</TableCell>
+                <TableCell align="right">{_("accounting_col_expenses")}</TableCell>
                 <TableCell align="right">{_("accounting_col_profit")}</TableCell>
                 <TableCell align="right">{_("accounting_col_action")}</TableCell>
               </TableRow>
@@ -289,15 +320,12 @@ const AdminAccounting = () => {
                 <TableCell align="right">
                   {eur(data.lifetime.stripe_fees_cents)}
                 </TableCell>
-                <TableCell align="right">
-                  {eur(data.lifetime.extraordinary_cents)}
-                </TableCell>
                 <TableCell align="right">{eur(data.lifetime.net_cents)}</TableCell>
                 <TableCell align="right">
-                  {eur(
-                    data.lifetime.maintenance_cents -
-                      data.lifetime.stripe_fees_cents,
-                  )}
+                  {eur(data.lifetime.expenses_cents)}
+                </TableCell>
+                <TableCell align="right">
+                  {eur(data.lifetime.profit_cents)}
                 </TableCell>
                 <TableCell align="right" />
               </TableRow>
@@ -308,12 +336,12 @@ const AdminAccounting = () => {
                   <TableCell align="right">{eur(m.gross_cents)}</TableCell>
                   <TableCell align="right">{eur(m.maintenance_cents)}</TableCell>
                   <TableCell align="right">{eur(m.stripe_fees_cents)}</TableCell>
-                  <TableCell align="right">{eur(m.extraordinary_cents)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     {eur(m.net_cents)}
                   </TableCell>
+                  <TableCell align="right">{eur(m.expenses_cents)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
-                    {eur(m.maintenance_cents - m.stripe_fees_cents)}
+                    {eur(m.profit_cents)}
                   </TableCell>
                   <TableCell align="right">
                     <Button

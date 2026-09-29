@@ -61,7 +61,6 @@ function drawSummary(doc: any, row: AccountingMonth, y: number): number {
     ["Total brut encaissé", eur(row.gross_cents)],
     ["Maintenance (10 %)", `- ${eur(row.maintenance_cents)}`],
     ["    dont Stripe", eur(row.stripe_fees_cents)],
-    ["Dépenses exceptionnelles", `- ${eur(row.extraordinary_cents)}`],
     ["Net", eur(row.net_cents)],
   ];
   lines.forEach(([label, val], i) => {
@@ -116,40 +115,16 @@ export async function generateMonthlyReport(month: AccountingMonth): Promise<voi
     margin: { left: 40, right: 40 },
   });
 
-  if (month.expenses.length > 0) {
-    const docAny = doc as any;
-    const lastY = docAny.lastAutoTable?.finalY ?? afterSummaryY + 40;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(3, 3, 64);
-    doc.text("Dépenses exceptionnelles", 40, lastY + 30);
-    autoTable(doc, {
-      startY: lastY + 40,
-      head: [["Date", "Libellé", "Montant"]],
-      body: month.expenses
-        .slice()
-        .sort((a, b) => a.incurred_on.localeCompare(b.incurred_on))
-        .map((e) => [
-          dateFmt.format(new Date(`${e.incurred_on}T12:00:00`)),
-          e.label,
-          eur(e.amount_cents),
-        ]),
-      styles: { fontSize: 10, cellPadding: 6 },
-      headStyles: { fillColor: [3, 3, 64], textColor: [255, 255, 255] },
-      columnStyles: { 2: { halign: "right" } },
-      margin: { left: 40, right: 40 },
-    });
-  }
-
   drawFooter(doc);
   doc.save(`jubilate-comptabilite-${month.key}.pdf`);
 }
 
 export async function generateLifetimeReport(
-  months: AccountingMonth[],
+  allMonths: AccountingMonth[],
   lifetime: AccountingMonth,
 ): Promise<void> {
   const { doc, autoTable } = await newDoc();
+  const months = allMonths.filter((m) => m.bookings.length > 0);
 
   const firstBookingDate = months.length
     ? dateFmt.format(
@@ -175,14 +150,13 @@ export async function generateLifetimeReport(
     eur(m.gross_cents),
     eur(m.maintenance_cents),
     eur(m.stripe_fees_cents),
-    eur(m.extraordinary_cents),
     eur(m.net_cents),
   ]);
 
   autoTable(doc, {
     startY: afterSummaryY + 20,
     head: [[
-      "Mois", "Cours", "Brut", "Maintenance", "dont Stripe", "Dépenses except.", "Net",
+      "Mois", "Cours", "Brut", "Maintenance", "dont Stripe", "Net",
     ]],
     body,
     foot: [[
@@ -191,7 +165,6 @@ export async function generateLifetimeReport(
       eur(lifetime.gross_cents),
       eur(lifetime.maintenance_cents),
       eur(lifetime.stripe_fees_cents),
-      eur(lifetime.extraordinary_cents),
       eur(lifetime.net_cents),
     ]],
     styles: { fontSize: 9, cellPadding: 5 },
@@ -208,35 +181,9 @@ export async function generateLifetimeReport(
       3: { halign: "right" },
       4: { halign: "right" },
       5: { halign: "right" },
-      6: { halign: "right" },
     },
     margin: { left: 40, right: 40 },
   });
-
-  if (lifetime.expenses.length > 0) {
-    const docAny = doc as any;
-    const lastY = docAny.lastAutoTable?.finalY ?? afterSummaryY + 40;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(3, 3, 64);
-    doc.text("Détail des dépenses exceptionnelles", 40, lastY + 30);
-    autoTable(doc, {
-      startY: lastY + 40,
-      head: [["Date", "Libellé", "Montant"]],
-      body: lifetime.expenses
-        .slice()
-        .sort((a, b) => a.incurred_on.localeCompare(b.incurred_on))
-        .map((e) => [
-          dateFmt.format(new Date(`${e.incurred_on}T12:00:00`)),
-          e.label,
-          eur(e.amount_cents),
-        ]),
-      styles: { fontSize: 10, cellPadding: 6 },
-      headStyles: { fillColor: [3, 3, 64], textColor: [255, 255, 255] },
-      columnStyles: { 2: { halign: "right" } },
-      margin: { left: 40, right: 40 },
-    });
-  }
 
   drawFooter(doc);
   doc.save("jubilate-comptabilite-lifetime.pdf");

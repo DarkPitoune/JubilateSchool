@@ -73,7 +73,7 @@ export interface TeacherSlot {
   student_last_name: string | null;
 }
 
-export interface ExtraordinaryExpense {
+export interface Expense {
   id: string;
   label: string;
   amount_cents: number;
