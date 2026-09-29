@@ -3,6 +3,11 @@ import Stripe from "https://esm.sh/stripe@14?target=deno";
 import { corsHeaders } from "../_shared/cors.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
 import { captureException } from "../_shared/sentry.ts";
+import {
+  findBookingByToken,
+  patchBooking,
+  transitionBooking,
+} from "../_shared/db.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
@@ -75,6 +80,43 @@ async function createZoomMeeting(
   }
 }
 
+// Captures the authorization unless Stripe already holds the money, so that
+// retrying a confirmation that failed after its capture succeeds instead of
+// raising payment_intent_unexpected_state.
+async function capturePayment(paymentIntentId: string, bookingId: string) {
+  const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+  if (intent.status === "requires_capture") {
+    await stripe.paymentIntents.capture(
+      paymentIntentId,
+      {},
+      { idempotencyKey: `confirm-booking:capture:${bookingId}` },
+    );
+  } else if (intent.status !== "succeeded") {
+    throw new Error(
+      `PaymentIntent ${paymentIntentId} cannot be captured (status: ${intent.status})`,
+    );
+  }
+}
+
+async function readStripeFee(paymentIntentId: string): Promise<number | null> {
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ["latest_charge.balance_transaction"],
+    });
+    const charge = pi.latest_charge;
+    const chargeObj =
+      charge && typeof charge === "object" ? (charge as Stripe.Charge) : null;
+    const bt = chargeObj?.balance_transaction;
+    const btObj =
+      bt && typeof bt === "object" ? (bt as Stripe.BalanceTransaction) : null;
+    return btObj ? btObj.fee : null;
+  } catch (err) {
+    console.error("Failed to fetch Stripe fee for", paymentIntentId, err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -91,13 +133,7 @@ serve(async (req) => {
       });
     }
 
-    // Find the booking by confirmation token
-    const { data: booking } = await supabaseAdmin
-      .from("bookings")
-      .select("*, profiles!bookings_student_id_fkey(first_name, last_name)")
-      .eq("confirmation_token", token)
-      .eq("status", "pending_confirmation")
-      .single();
+    const booking = await findBookingByToken(token);
 
     if (!booking) {
       return new Response(
@@ -109,60 +145,51 @@ serve(async (req) => {
       );
     }
 
-    // Capture the Stripe payment and fetch the fee
     let feeCents: number | null = null;
     if (booking.stripe_payment_intent_id) {
-      await stripe.paymentIntents.capture(booking.stripe_payment_intent_id);
+      await capturePayment(booking.stripe_payment_intent_id, booking.id);
+      feeCents = await readStripeFee(booking.stripe_payment_intent_id);
+    }
+
+    const update: Record<string, unknown> = { status: "confirmed" };
+    if (feeCents !== null) update.stripe_fee_cents = feeCents;
+
+    const status = await transitionBooking(
+      booking.id,
+      "pending_confirmation",
+      update,
+    );
+
+    if (status !== "confirmed") {
+      return new Response(
+        renderHTML(
+          "Already processed",
+          `This booking is now "${status}" and cannot be confirmed.`,
+        ),
+        {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "text/html" },
+        },
+      );
+    }
+
+    // Best-effort, and deliberately after the confirmation: Zoom is slow and its
+    // failure must never leave a captured payment on an unconfirmed booking.
+    const studentName =
+      `${booking.profiles?.first_name || ""} ${booking.profiles?.last_name || ""}`.trim() ||
+      "Student";
+    const zoomLink = await createZoomMeeting(booking.start_time, 60, studentName);
+    if (zoomLink) {
       try {
-        const pi = await stripe.paymentIntents.retrieve(
-          booking.stripe_payment_intent_id,
-          { expand: ["latest_charge.balance_transaction"] },
-        );
-        const charge = pi.latest_charge;
-        const chargeObj =
-          charge && typeof charge === "object" ? (charge as Stripe.Charge) : null;
-        const bt = chargeObj?.balance_transaction;
-        const btObj =
-          bt && typeof bt === "object"
-            ? (bt as Stripe.BalanceTransaction)
-            : null;
-        if (btObj) feeCents = btObj.fee;
+        await patchBooking(booking.id, { zoom_meeting_link: zoomLink });
       } catch (err) {
-        console.error("Failed to fetch Stripe fee for booking", booking.id, err);
+        console.error("Failed to store Zoom link for booking", booking.id, err);
+        captureException(err, { function: "confirm-booking", step: "zoom_link" });
       }
     }
 
-    // Create Zoom meeting (best-effort)
-    const studentName = `${booking.profiles?.first_name || ""} ${booking.profiles?.last_name || ""}`.trim() || "Student";
-    const zoomLink = await createZoomMeeting(
-      booking.start_time,
-      60,
-      studentName,
-    );
-
-    // Update booking status
-    const update: Record<string, unknown> = {
-      status: "confirmed",
-      zoom_meeting_link: zoomLink,
-    };
-    if (feeCents !== null) update.stripe_fee_cents = feeCents;
-    await supabaseAdmin.from("bookings").update(update).eq("id", booking.id);
-
-    // Send confirmation emails
-    await supabaseAdmin.functions.invoke("send-email", {
-      body: {
-        type: "booking_confirmed_student",
-        booking_id: booking.id,
-      },
-    });
-
-    // Send confirmation emails
-    await supabaseAdmin.functions.invoke("send-email", {
-      body: {
-        type: "booking_confirmed_teacher",
-        booking_id: booking.id,
-      },
-    });
+    await notify("booking_confirmed_student", booking.id);
+    await notify("booking_confirmed_teacher", booking.id);
 
     return new Response(
       renderHTML(
@@ -181,6 +208,16 @@ serve(async (req) => {
     );
   }
 });
+
+async function notify(type: string, bookingId: string) {
+  const { error } = await supabaseAdmin.functions.invoke("send-email", {
+    body: { type, booking_id: bookingId },
+  });
+  if (error) {
+    console.error(`Failed to send ${type} for booking ${bookingId}:`, error);
+    captureException(error, { function: "confirm-booking", email: type });
+  }
+}
 
 function renderHTML(
   title: string,
